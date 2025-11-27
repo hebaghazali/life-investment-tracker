@@ -1,0 +1,31 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model DayEntry {
+  id          String       @id @default(cuid())
+  date        DateTime     @unique
+  mood        Int?         // 1 to 5
+  energy      Int?         // 1 to 5
+  note        String?      // short reflection for the day
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  investments Investment[]
+}
+
+model Investment {
+  id       String   @id @default(cuid())
+  dayId    String
+  day      DayEntry @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  category String   // "career", "health", "relationships", "wellbeing", "meaning", "environment"
+  score    Int      // 0 to 3
+  comment  String?  // optional short comment
+}

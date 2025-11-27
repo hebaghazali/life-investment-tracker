@@ -1,355 +1,227 @@
 # Life Investment Tracker
 
-A small personal web app that helps you track how you invest in different life areas every day, and visualize your progress on a monthly calendar.
+A calm, personal web app that helps you track how you invest in different life areas every day and visualize your progress on a monthly calendar.
 
-Tech stack:
+## Tech Stack
 
-* Next.js (App Router, TypeScript)
-* Prisma ORM
-* SQLite in development, PostgreSQL in production
-* Tailwind CSS for styling
+- **Next.js 14+** (App Router, TypeScript)
+- **Tailwind CSS** for styling
+- **Prisma ORM** for database access
+- **SQLite** for local development (PostgreSQL ready for production)
 
-The goal is a calm, low friction tool that you can actually use daily, not a productivity monster or public SaaS.
+## Features
 
----
+### Today Page
+- Quick daily logging interface
+- Track investments across 6 life categories (career, health, relationships, wellbeing, meaning, environment)
+- Rate each category from 0-3
+- Log mood and energy (1-5)
+- Add a short daily reflection note
+- Auto-saves to your local database
 
-## 1. Concept and Goals
+### Calendar Page
+- Monthly calendar view of all your entries
+- Visual intensity indicators using color coding
+- Month navigation (previous/next)
+- Quick stats: days logged, high mood days, average intensity
+- Legend showing intensity levels
 
-### 1.1 Problem
+### Design Philosophy
+- Low friction: complete an entry in under a minute
+- Calm aesthetics: muted greens and blues, no aggressive colors
+- Private and local: all data stays on your machine (SQLite)
+- No authentication needed: single-user app
+- Server-first architecture using Next.js Server Components
 
-Paper journaling and scattered notes make it hard to answer questions like:
+## Getting Started
 
-* Am I consistently investing in my career or just reacting to work?
-* Is my health getting attention, or am I sacrificing it for other goals?
-* Which months feel off and why?
+### Prerequisites
 
-We want a simple system that:
+- Node.js 18+ (LTS recommended)
+- npm, pnpm, or yarn
 
-* Captures daily investment in life areas with very low friction
-* Visualizes consistency and balance on a calendar
-* Encourages gentle reflection, not self punishment
+### Installation
 
-### 1.2 Core idea
+1. **Clone or download this repository**
 
-Each day you log:
+```bash
+cd life-investment-tracker
+```
 
-* Small numeric scores for a few categories (career, health, relationships, wellbeing, etc)
-* Mood and energy (1 to 5)
-* One short reflection
+2. **Install dependencies**
 
-The app then:
+```bash
+npm install
+```
 
-* Shows a monthly calendar where each day is colored based on your investment or mood
-* Lets you click any day to see or edit details
-* Eventually provides simple summaries and trends
+3. **Set up the database**
 
-### 1.3 Primary goals
+The `.env` file should already be configured with:
+```
+DATABASE_URL="file:./dev.db"
+```
 
-* Be extremely quick to update
-* Make consistency visible at a glance
-* Stay private and personal
-* Be easy to extend later (more metrics, charts, exports)
+Run Prisma migrations to create the database:
 
-### 1.4 Non goals
+```bash
+npm run db:migrate
+```
 
-* No public profiles
-* No social features
-* No complex gamification or streak shaming
-* No multi tenant SaaS setup in v1
+This will create a `dev.db` SQLite file in the `prisma` directory with the required tables.
 
----
+4. **Start the development server**
 
-## 2. Tech Stack and Architecture
+```bash
+npm run dev
+```
 
-### 2.1 Frontend
+5. **Open the app**
 
-* Next.js (App Router)
-* TypeScript
-* Server Components where possible, Client Components only when needed for interactivity
-* Tailwind CSS for layout and styling
+Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 2.2 Backend
+## Available Scripts
 
-* Next.js server actions and/or route handlers for data access
-* Prisma ORM for database access
-* SQLite for local development
-* PostgreSQL in production (Neon, Supabase, Railway or similar)
+- `npm run dev` - Start the development server
+- `npm run build` - Build for production
+- `npm start` - Start the production server
+- `npm run lint` - Run ESLint
+- `npm run db:migrate` - Run Prisma migrations
+- `npm run db:studio` - Open Prisma Studio (database GUI)
 
-### 2.3 High level architecture
+## Project Structure
 
-* Single Next.js app that serves both frontend and backend
-* Minimal API surface, mostly server actions for mutations
-* Prisma as the single source of truth for the data model
-* App is intentionally monolithic and simple
+```
+life-investment-tracker/
+├── app/
+│   ├── calendar/
+│   │   └── page.tsx          # Calendar view with monthly grid
+│   ├── today/
+│   │   ├── actions.ts        # Server actions for saving entries
+│   │   ├── page.tsx          # Today page (server component)
+│   │   └── TodayForm.tsx     # Client form component
+│   ├── globals.css
+│   ├── layout.tsx            # Root layout with navigation
+│   └── page.tsx              # Home page (redirects to /today)
+├── lib/
+│   ├── prisma.ts             # Prisma client singleton
+│   ├── constants.ts          # Investment categories and labels
+│   ├── types.ts              # TypeScript types
+│   └── scoring.ts            # Day intensity calculation
+├── prisma/
+│   ├── schema.prisma         # Database schema
+│   └── dev.db                # SQLite database (created after migration)
+└── package.json
+```
 
----
+## Data Model
 
-## 3. Features and UX
+### DayEntry
+- `id`: Unique identifier (cuid)
+- `date`: Date of the entry (unique, normalized to start of day)
+- `mood`: Optional mood rating (1-5)
+- `energy`: Optional energy rating (1-5)
+- `note`: Optional short reflection text
+- `investments`: Related Investment records
 
-### 3.1 Core features for v1
+### Investment
+- `id`: Unique identifier (cuid)
+- `dayId`: Reference to DayEntry
+- `category`: One of the 6 life categories
+- `score`: Investment score (0-3)
+- `comment`: Optional comment for this investment
 
-1. **Today page**
+## Customization
 
-   * Shows current date
-   * Inputs for:
+### Adding or Changing Categories
 
-     * Category scores (0 to 3)
-     * Mood (1 to 5)
-     * Energy (1 to 5)
-     * One short reflection text
-   * Submit button that saves the day entry
+Edit `lib/constants.ts`:
 
-2. **Calendar page**
+```typescript
+export const INVESTMENT_CATEGORIES = [
+  "career",
+  "health",
+  // Add your own categories here
+] as const;
 
-   * Monthly calendar grid (current month)
-   * Each day shows:
+export const CATEGORY_LABELS = {
+  career: "Your Custom Label",
+  health: "Another Label",
+  // Add labels for your categories
+};
+```
 
-     * Color intensity based on total investment or mood
-   * Clicking a day opens the details (view or edit)
+### Changing Colors
 
-3. **Basic navigation**
+The app uses Tailwind CSS. Main color classes:
+- Primary: `emerald-*` (green)
+- Secondary: `sky-*` (blue)
+- Background: `slate-50` or `zinc-50`
 
-   * Header with links:
+Edit these in the component files or update `tailwind.config.ts` for global theme changes.
 
-     * Today
-     * Calendar
-     * Future Insights (placeholder)
+## Deployment (Production)
 
-### 3.2 UX principles
+### Using PostgreSQL
 
-* Focus on speed and simplicity
-* One line reflections only, no long journaling required
-* Missed days are neutral, not treated as failure
-* Calendar is the visual reward
+1. Create a PostgreSQL database (e.g., on [Neon](https://neon.tech), [Supabase](https://supabase.com), or [Railway](https://railway.app))
 
----
+2. Update `.env` with your PostgreSQL connection string:
 
-## 4. Data Model (Prisma)
+```bash
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+```
 
-Initial Prisma schema:
+3. Update `prisma/schema.prisma` datasource:
 
 ```prisma
-model DayEntry {
-  id          String        @id @default(cuid())
-  date        DateTime      @unique
-  mood        Int?          // 1 to 5
-  energy      Int?          // 1 to 5
-  note        String?       // short reflection for the day
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  investments Investment[]
-}
-
-model Investment {
-  id       String   @id @default(cuid())
-  dayId    String
-  day      DayEntry @relation(fields: [dayId], references: [id])
-  category String   // "career", "health", "relationships", "wellbeing", "meaning", "environment"
-  score    Int      // 0 to 3
-  comment  String?  // optional short comment
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 ```
 
-For v1, categories are handled in code as a fixed list, not as a separate table.
+4. Run migrations:
 
-Recommended category constants:
-
-```ts
-export const INVESTMENT_CATEGORIES = [
-  "career",        // career, money, skills
-  "health",        // physical health
-  "relationships", // family, friends, social
-  "wellbeing",     // mental and emotional health
-  "meaning",       // values, spirituality, purpose
-  "environment",   // order, decluttering, surroundings
-] as const;
+```bash
+npx prisma migrate deploy
 ```
 
----
+### Deploy to Vercel
 
-## 5. Pages and Routes
+1. Push your code to GitHub
 
-Using Next.js App Router under `app/`:
+2. Import your repository on [Vercel](https://vercel.com)
 
-### 5.1 `/` or `/today`
+3. Add your `DATABASE_URL` environment variable in Vercel settings
 
-**Purpose:** Main daily logging page.
+4. Deploy!
 
-* Shows:
+## Future Enhancements
 
-  * Today header (date in friendly format)
-  * Category list with score controls
-  * Mood and energy inputs
-  * Short text field for reflection
-* On load:
+Ideas for v2 and beyond:
+- Click on calendar days to view/edit past entries
+- Weekly and monthly summary charts
+- Export data to CSV or JSON
+- Tags for days (rest day, deep work, social, etc.)
+- Trends and insights page
+- Dark mode
+- Mobile app version
 
-  * Fetch or create the DayEntry for today
-* On save:
+## Philosophy
 
-  * Use a server action to upsert the entry and investments
+This app is intentionally simple and personal. It's designed to:
+- Encourage daily reflection without overwhelming you
+- Make consistency visible at a glance
+- Stay private (no cloud services required in local mode)
+- Be easy to extend as your tracking needs evolve
 
-Suggested server action:
+There are no streaks, no gamification, no social features. Just you and your data.
 
-```ts
-// app/today/actions.ts
-export async function saveDayEntry(input: SaveDayEntryInput): Promise<void> { ... }
-```
+## License
 
-### 5.2 `/calendar`
-
-**Purpose:** Monthly overview of all entries.
-
-* Default to current month
-* For each day:
-
-  * Render a small cell with:
-
-    * Background color based on investment or mood
-* On click:
-
-  * Show a side panel or modal with details of that day
-  * Allow editing using the same saveDayEntry action
-
-Implementation approach:
-
-* Server component that fetches all DayEntry records in the month and passes them to a calendar component
-* Simple month navigation can be added later with query params `?month=YYYY-MM`
-
-### 5.3 `/insights` (future)
-
-Placeholder for:
-
-* Weekly summaries
-* Trend charts
-* Aggregated metrics
-
-Not required for v1, but keep in mind when structuring code.
+MIT - feel free to use this for personal or educational purposes.
 
 ---
 
-## 6. Styling and UI Theme
+Built with Next.js, Prisma, and Tailwind CSS.
 
-### 6.1 Visual theme
-
-Goal: Calm and reassuring, not aggressive productivity.
-
-Rough Tailwind direction:
-
-* Background: `bg-slate-50` or `bg-zinc-50`
-* Surface: `bg-white` with `rounded-2xl` and `shadow-sm`
-* Primary: muted green or blue, for example:
-
-  * `text-emerald-700` or `text-sky-700`
-  * `bg-emerald-500` or `bg-sky-500` for emphasis
-* Text:
-
-  * `text-zinc-900` for main text
-  * `text-zinc-500` for hints and labels
-
-### 6.2 Calendar coloring
-
-You can compute a "day intensity" as:
-
-* Sum of all investment scores for that day, or
-* Mood score, or
-* A combination of both
-
-Map that intensity to classes like:
-
-* 0 or no data: `bg-zinc-100`
-* Low: `bg-emerald-100`
-* Medium: `bg-emerald-200`
-* High: `bg-emerald-300` or `bg-emerald-400`
-
-Keep the text inside calendar cells readable, use `text-zinc-800` or similar.
-
----
-
-## 7. Development Setup
-
-### 7.1 Prerequisites
-
-* Node.js LTS
-* pnpm or npm or yarn
-* `DATABASE_URL` environment variable for Prisma
-
-  * For local dev, SQLite is enough
-
-### 7.2 Steps
-
-1. **Create Next.js app**
-
-   ```bash
-   npx create-next-app@latest life-investment-tracker --typescript --tailwind
-   ```
-
-2. **Install Prisma**
-
-   ```bash
-   cd life-investment-tracker
-   pnpm add -D prisma
-   pnpm add @prisma/client
-   ```
-
-3. **Initialize Prisma**
-
-   ```bash
-   npx prisma init
-   ```
-
-   * Set `DATABASE_URL` in `.env`, for example:
-
-     ```env
-     DATABASE_URL="file:./dev.db"
-     ```
-
-   * Replace `schema.prisma` models with the DayEntry and Investment models above.
-
-4. **Run migrations**
-
-   ```bash
-   npx prisma migrate dev --name init
-   ```
-
-5. **Start dev server**
-
-   ```bash
-   pnpm dev
-   ```
-
----
-
-## 8. Coding Guidelines
-
-For AI assistants (Cursor, Copilot, etc) and future you:
-
-* Prefer server actions for mutations instead of overcomplicating with many API routes, unless there is a clear need.
-
-* Keep components small and focused:
-
-  * One component for the Today form
-  * One component for the Calendar grid
-  * Helper components for calendar cells and dialogs
-
-* Keep logic for computing "day intensity" in a separate utility, for example:
-
-  ```ts
-  // lib/scoring.ts
-  export function calculateDayIntensity(entry: DayEntryWithInvestments): number { ... }
-  ```
-
-* Use TypeScript types for DayEntry and Investment fetched from Prisma, do not redefine them manually.
-
-* Stick to Tailwind for layout and styling, avoid separate CSS files unless necessary.
-
----
-
-## 9. Future Enhancements
-
-Not for v1, but good to keep in mind:
-
-* Authentication for multi device use
-* Charts for mood, energy, and per category investment over time
-* CSV or JSON export for personal analysis in Python
-* Weekly summary generator
-* Tags for days (rest, deep work, social, etc)
