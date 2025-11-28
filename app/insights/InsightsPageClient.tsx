@@ -12,6 +12,8 @@ import { CategoryBalanceChart } from "@/components/insights/CategoryBalanceChart
 import { InsightsConsistencySection } from "@/components/insights/InsightsConsistencySection";
 import { InsightsMvdSection } from "@/components/insights/InsightsMvdSection";
 import { InsightsTagsSection } from "@/components/insights/InsightsTagsSection";
+import { InsightsNarrativeSummary } from "@/components/insights/InsightsNarrativeSummary";
+import { InsightsCorrelationsSection } from "@/components/insights/InsightsCorrelationsSection";
 
 interface InsightsPageClientProps {
   initialData: InsightsData;
@@ -192,52 +194,54 @@ export function InsightsPageClient({
         </p>
       </div>
 
-      {/* Filters Section */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Time Range Selector */}
-        <div className="flex flex-wrap gap-2">
-          <span className="text-sm text-muted-foreground self-center mr-2">
-            Time range:
-          </span>
-          {(["last-7-days", "last-30-days", "last-90-days", "all-time"] as TimeRange[]).map(
-            (range) => (
-              <Button
-                key={range}
-                variant={selectedRange === range ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedRange(range)}
-              >
-                {range === "last-7-days" && "7 days"}
-                {range === "last-30-days" && "30 days"}
-                {range === "last-90-days" && "90 days"}
-                {range === "all-time" && "All time"}
-              </Button>
-            )
-          )}
-        </div>
+      {/* Sticky Filters Section */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 py-4 -mx-6 px-6 border-b border-transparent data-[scrolled=true]:border-border">
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Time Range Selector */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm text-muted-foreground self-center mr-2">
+              Time range:
+            </span>
+            {(["last-7-days", "last-30-days", "last-90-days", "all-time"] as TimeRange[]).map(
+              (range) => (
+                <Button
+                  key={range}
+                  variant={selectedRange === range ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedRange(range)}
+                >
+                  {range === "last-7-days" && "7 days"}
+                  {range === "last-30-days" && "30 days"}
+                  {range === "last-90-days" && "90 days"}
+                  {range === "all-time" && "All time"}
+                </Button>
+              )
+            )}
+          </div>
 
-        {/* Category Focus Selector */}
-        <div className="flex flex-wrap gap-2">
-          <span className="text-sm text-muted-foreground self-center mr-2">
-            Focus:
-          </span>
-          <Button
-            variant={selectedCategory === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedCategory("all")}
-          >
-            All
-          </Button>
-          {INVESTMENT_CATEGORIES.map((cat) => (
+          {/* Category Focus Selector */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm text-muted-foreground self-center mr-2">
+              Focus:
+            </span>
             <Button
-              key={cat}
-              variant={selectedCategory === cat ? "default" : "outline"}
+              variant={selectedCategory === "all" ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => setSelectedCategory("all")}
             >
-              {CATEGORY_INFO[cat].label}
+              All
             </Button>
-          ))}
+            {INVESTMENT_CATEGORIES.map((cat) => (
+              <Button
+                key={cat}
+                variant={selectedCategory === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(cat)}
+              >
+                {CATEGORY_INFO[cat].label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -365,9 +369,15 @@ export function InsightsPageClient({
           </div>
         </Card>
       ) : (
-        <>
+        <div className="space-y-8">
+          {/* Narrative Summary */}
+          <InsightsNarrativeSummary data={filteredData} />
+
+          {/* Section Divider */}
+          <div className="h-px bg-border" />
+
           {/* Charts Section */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2 animate-in fade-in duration-300">
             <MoodEnergyChart 
               days={filteredData.days} 
               range={selectedRange} 
@@ -378,6 +388,9 @@ export function InsightsPageClient({
             />
           </div>
 
+          {/* Section Divider */}
+          <div className="h-px bg-border" />
+
           {/* Consistency & Streaks Section */}
           <InsightsConsistencySection days={filteredData.days} />
 
@@ -386,7 +399,10 @@ export function InsightsPageClient({
 
           {/* Tags Section */}
           <InsightsTagsSection days={filteredData.days} />
-        </>
+
+          {/* Correlations Section */}
+          <InsightsCorrelationsSection days={filteredData.days} />
+        </div>
       )}
     </div>
   );
