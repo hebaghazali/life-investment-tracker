@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import type { DayEntry } from "@/lib/types";
 import { getEntriesForMonth } from "@/app/actions/dayEntry";
 import { MonthCalendar } from "@/components/calendar/MonthCalendar";
@@ -18,6 +18,11 @@ export function CalendarClient({
 }: CalendarClientProps) {
   const [entries, setEntries] = useState(initialEntries);
   const [isPending, startTransition] = useTransition();
+
+  // Sync local state when server data changes (e.g. after router.refresh())
+  useEffect(() => {
+    setEntries(initialEntries);
+  }, [initialEntries]);
 
   const handleMonthChange = (year: number, month: number) => {
     startTransition(async () => {

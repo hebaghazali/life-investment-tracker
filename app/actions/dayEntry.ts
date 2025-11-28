@@ -161,3 +161,23 @@ export async function getAllEntries() {
   }));
 }
 
+export async function clearDayEntry(date: string) {
+  const dateObj = new Date(date + "T00:00:00.000Z");
+
+  // Find the entry for this date
+  const existing = await prisma.dayEntry.findUnique({
+    where: { date: dateObj },
+  });
+
+  // If entry exists, delete it (cascade will remove investments)
+  if (existing) {
+    await prisma.dayEntry.delete({
+      where: { id: existing.id },
+    });
+  }
+
+  // Revalidate paths to reflect cleared state
+  revalidatePath("/today");
+  revalidatePath("/calendar");
+}
+

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { DayEntry, Investment, InvestmentCategory } from "@/lib/types";
 import { INVESTMENT_CATEGORIES } from "@/lib/types";
-import { saveDayEntry } from "@/app/actions/dayEntry";
+import { saveDayEntry, clearDayEntry } from "@/app/actions/dayEntry";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ interface DayDetailModalProps {
 }
 
 export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [mood, setMood] = useState<number | undefined>(undefined);
@@ -88,10 +90,51 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
           })),
           tags,
         });
+        
+        // Refresh router to fetch updated data from server
+        router.refresh();
+        
         toast.success("Entry saved successfully.");
         onClose();
       } catch (error) {
         toast.error("Failed to save entry. Please try again.");
+        console.error(error);
+      }
+    });
+  };
+
+  const handleClearDay = () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to clear all data for this day? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    startTransition(async () => {
+      try {
+        await clearDayEntry(date);
+        
+        // Reset local form state to defaults
+        setInvestments(
+          INVESTMENT_CATEGORIES.map((cat) => ({
+            id: `${date}-${cat}`,
+            category: cat,
+            score: 0,
+          }))
+        );
+        setMood(undefined);
+        setEnergy(undefined);
+        setNote("");
+        setTags([]);
+        setIsMinimumViableDay(false);
+
+        // Refresh router to fetch updated data from server
+        router.refresh();
+
+        toast.success("Day cleared successfully.");
+        onClose();
+      } catch (error) {
+        toast.error("Failed to clear day. Please try again.");
         console.error(error);
       }
     });
@@ -158,13 +201,24 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
           />
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isPending}>
-            {isPending ? "Saving..." : "Save"}
-          </Button>
+        <DialogFooter className="flex justify-between items-center">
+          <button
+            type="button"
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
+            onClick={handleClearDay}
+            disabled={isPending}
+          >
+            Clear day
+          </button>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
