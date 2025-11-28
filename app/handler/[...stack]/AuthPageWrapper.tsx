@@ -5,60 +5,133 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@stackframe/stack";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { DEMO_ACCOUNT_EMAIL } from "@/lib/constants";
+import { Info, Copy, Check } from "lucide-react";
 
 interface AuthPageWrapperProps {
   children: ReactNode;
 }
 
-function DemoAccountNotice() {
-  const [isDismissed, setIsDismissed] = useState(false);
+const DEMO_PASSWORD = "password123";
+
+function DemoAccountDialog() {
   const pathname = usePathname();
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [shouldAnimate, setShouldAnimate] = useState(true);
   
   // Only show on sign-in page
   const isSignInPage = pathname?.includes('/handler/sign-in');
   
-  if (!isSignInPage || isDismissed) {
+  // Reset animation on mount
+  useEffect(() => {
+    if (isSignInPage) {
+      setShouldAnimate(true);
+      // Remove animation class after it completes
+      const timer = setTimeout(() => {
+        setShouldAnimate(false);
+      }, 1300);
+      return () => clearTimeout(timer);
+    }
+  }, [isSignInPage]);
+  
+  if (!isSignInPage) {
     return null;
   }
 
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   return (
-    <Card className="mx-auto mb-6 max-w-md border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <h3 className="mb-2 font-semibold text-blue-900 dark:text-blue-100">
-              Quick demo login
-            </h3>
-            <p className="mb-3 text-sm text-blue-800 dark:text-blue-200">
-              You can explore the app using our demo account:
-            </p>
-            <div className="rounded-md bg-white/60 p-3 font-mono text-sm dark:bg-blue-900/30">
-              <div className="mb-1">
-                <span className="text-blue-700 dark:text-blue-300">Email:</span>{" "}
-                <span className="font-semibold text-blue-900 dark:text-blue-100">
-                  {DEMO_ACCOUNT_EMAIL}
-                </span>
-              </div>
-              <div>
-                <span className="text-blue-700 dark:text-blue-300">Password:</span>{" "}
-                <span className="font-semibold text-blue-900 dark:text-blue-100">
-                  password123
-                </span>
-              </div>
+    <Dialog>
+      <DialogTrigger asChild>
+        <button 
+          className={`
+            inline-flex items-center gap-1.5 px-3 py-1 text-sm 
+            rounded-full cursor-pointer
+            bg-blue-50 text-blue-700 border border-blue-200
+            hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300
+            dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-900
+            dark:hover:bg-blue-900/50 dark:hover:text-blue-200 dark:hover:border-blue-800
+            transition-all duration-200
+            shadow-sm
+            ${shouldAnimate ? 'animate-gentle-pulse-once' : ''}
+          `.trim().replace(/\s+/g, ' ')}
+        >
+          <Info className="h-4 w-4" />
+          <span>Use demo account</span>
+        </button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Demo Login</DialogTitle>
+          <DialogDescription>
+            You can explore the app using our demo account:
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          {/* Email */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Email</label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono">
+                {DEMO_ACCOUNT_EMAIL}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => copyToClipboard(DEMO_ACCOUNT_EMAIL, 'email')}
+                className="h-9 w-9 p-0"
+              >
+                {copiedField === 'email' ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                <span className="sr-only">Copy email</span>
+              </Button>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsDismissed(true)}
-            className="h-6 px-2 text-blue-700 hover:bg-blue-100 hover:text-blue-900 dark:text-blue-300 dark:hover:bg-blue-900/50 dark:hover:text-blue-100"
-          >
-            Got it
-          </Button>
+
+          {/* Password */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-muted-foreground">Password</label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono">
+                {DEMO_PASSWORD}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => copyToClipboard(DEMO_PASSWORD, 'password')}
+                className="h-9 w-9 p-0"
+              >
+                {copiedField === 'password' ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                <span className="sr-only">Copy password</span>
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -69,6 +142,7 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
   
   const isDemoUser = user?.primaryEmail === DEMO_ACCOUNT_EMAIL;
   const isAccountSettingsPage = pathname?.includes('/handler/account-settings');
+  const isSignInPage = pathname?.includes('/handler/sign-in');
   
   // Block demo user from accessing account settings where they could change password
   useEffect(() => {
@@ -98,7 +172,12 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
   
   return (
     <div className="relative">
-      <DemoAccountNotice />
+      {/* Compact demo account link positioned at top - only on sign-in page */}
+      {isSignInPage && (
+        <div className="absolute top-4 right-4 z-10">
+          <DemoAccountDialog />
+        </div>
+      )}
       {children}
     </div>
   );
