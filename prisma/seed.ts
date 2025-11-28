@@ -2,6 +2,9 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// User ID from Neon Auth (test@example.com)
+const SEED_USER_ID = "1448b708-0c7a-4ea5-8f8e-7390cce6e3c5";
+
 const sampleTags = ["deep-work", "social", "rest", "focused", "creative"];
 
 function randomScore() {
@@ -46,11 +49,11 @@ async function main() {
 
     const date = new Date(Date.UTC(currentYear, currentMonth, day));
 
-    // Check if entry already exists for dev user
+    // Check if entry already exists for test user
     const existing = await prisma.dayEntry.findUnique({
       where: { 
         userId_date: {
-          userId: "dev-user",
+          userId: SEED_USER_ID,
           date,
         }
       },
@@ -68,7 +71,7 @@ async function main() {
 
     await prisma.dayEntry.create({
       data: {
-        userId: "dev-user",
+        userId: SEED_USER_ID,
         date,
         mood: randomMood(),
         energy: randomEnergy(),
