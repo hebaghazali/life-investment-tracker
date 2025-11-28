@@ -105,3 +105,11 @@
   }
 }
 
+/* Hide Stack Auth "last" badge on OAuth buttons */
+@layer utilities {
+  /* Target the blue badge that Stack Auth adds to OAuth buttons */
+  button span.absolute[class*="-top-2"][class*="-right-2"][class*="bg-blue"] {
+    display: none !important;
+  }
+}
+
