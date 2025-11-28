@@ -111,6 +111,7 @@ export async function saveDayEntry(input: SaveDayEntryInput) {
 
   revalidatePath("/today");
   revalidatePath("/calendar");
+  revalidatePath(`/day/${input.date}`);
 }
 
 export async function getDayEntry(date: string) {
@@ -249,5 +250,6 @@ export async function clearDayEntry(date: string) {
   // Revalidate paths to reflect cleared state
   revalidatePath("/today");
   revalidatePath("/calendar");
+  revalidatePath(`/day/${date}`);
 }
 

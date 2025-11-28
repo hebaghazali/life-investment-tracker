@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import type { DayEntry } from "@/lib/types";
-import { CATEGORY_INFO, INVESTMENT_CATEGORIES } from "@/lib/types";
 import {
   Sheet,
   SheetContent,
@@ -10,9 +10,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { DayKeyMetrics } from "@/components/day/DayKeyMetrics";
+import { DayMVDIndicator } from "@/components/day/DayMVDIndicator";
+import { DayInvestments } from "@/components/day/DayInvestments";
+import { DayTags } from "@/components/day/DayTags";
+import { DayReflection } from "@/components/day/DayReflection";
 
 interface DayPreviewDrawerProps {
   date: string;
@@ -79,111 +82,38 @@ export function DayPreviewDrawer({
     }
   };
 
-  const renderScoreIndicator = (score: number) => {
-    return (
-      <div className="flex gap-1">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`h-2 w-2 rounded-full transition-colors ${
-              i < score ? "bg-primary" : "bg-muted"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-[380px] flex flex-col">
         <SheetHeader>
           <SheetTitle>{formattedDate}</SheetTitle>
-          <SheetDescription>Day overview</SheetDescription>
+          <SheetDescription>
+            Day overview •{" "}
+            <Link
+              href={`/day/${date}`}
+              className="text-primary hover:underline"
+              onClick={onClose}
+            >
+              Open full view
+            </Link>
+          </SheetDescription>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 py-4">
           {/* Key Metrics */}
-          <div className="flex flex-wrap gap-2">
-            {entry?.mood !== null && entry?.mood !== undefined && (
-              <Badge variant="secondary" className="text-sm">
-                Mood: {entry.mood}/5
-              </Badge>
-            )}
-            {entry?.energy !== null && entry?.energy !== undefined && (
-              <Badge variant="secondary" className="text-sm">
-                Energy: {entry.energy}/5
-              </Badge>
-            )}
-            <Badge variant="default" className="text-sm bg-primary">
-              Total: {totalScore}
-            </Badge>
-          </div>
+          <DayKeyMetrics entry={entry} totalScore={totalScore} />
 
           {/* MVD Indicator */}
-          {entry?.isMinimumViableDay && (
-            <Badge variant="outline" className="w-fit">
-              ✓ Minimum Viable Day
-            </Badge>
-          )}
+          <DayMVDIndicator isMinimumViableDay={entry?.isMinimumViableDay} />
 
           {/* Category Breakdown */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">
-              Investments
-            </h3>
-            {INVESTMENT_CATEGORIES.map((category) => {
-              const investment = entry?.investments.find(
-                (inv) => inv.category === category
-              );
-              const score = investment?.score || 0;
-              const categoryLabel = CATEGORY_INFO[category].label;
-
-              return (
-                <div
-                  key={category}
-                  className="flex items-center justify-between"
-                >
-                  <span className="text-sm text-foreground">
-                    {categoryLabel}
-                  </span>
-                  {renderScoreIndicator(score)}
-                </div>
-              );
-            })}
-          </div>
+          <DayInvestments entry={entry} />
 
           {/* Tags */}
-          {entry?.tags && entry.tags.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-foreground">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {entry.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+          <DayTags tags={entry?.tags} />
 
           {/* Reflection */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">
-              Reflection
-            </h3>
-            <Card className="p-3">
-              {entry?.note ? (
-                <p className="text-sm text-foreground whitespace-pre-wrap">
-                  {entry.note}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  No reflection recorded
-                </p>
-              )}
-            </Card>
-          </div>
+          <DayReflection note={entry?.note} />
         </div>
 
         {/* Footer Actions */}
