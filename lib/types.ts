@@ -19,7 +19,7 @@ export interface DayEntry {
   mood?: number | null; // 1-5
   energy?: number | null; // 1-5
   note?: string | null;
-  isMinimumViableDay?: boolean | null;
+  isMinimumViableDay: boolean;
   investments: Investment[];
   tags: string[];
 }

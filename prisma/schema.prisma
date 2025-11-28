@@ -14,7 +14,7 @@ model DayEntry {
   mood             Int?
   energy           Int?
   note             String?
-  isMinimumViableDay Boolean?   @default(false)
+  isMinimumViableDay Boolean    @default(false)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   investments      Investment[]
