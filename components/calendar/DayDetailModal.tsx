@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { DayEntry, Investment, InvestmentCategory } from "@/lib/types";
 import { INVESTMENT_CATEGORIES } from "@/lib/types";
-import { saveDayEntry, clearDayEntry } from "@/app/actions/dayEntry";
+import { saveDayEntry } from "@/app/actions/dayEntry";
+import { useDeleteDay } from "@/hooks/useDeleteDay";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,24 @@ interface DayDetailModalProps {
 export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { deleteDay: deleteDayAction, isPending: isDeletePending } = useDeleteDay({
+    onSuccess: () => {
+      // Reset local form state to defaults
+      setInvestments(
+        INVESTMENT_CATEGORIES.map((cat) => ({
+          id: `${date}-${cat}`,
+          category: cat,
+          score: 0,
+        }))
+      );
+      setMood(undefined);
+      setEnergy(undefined);
+      setNote("");
+      setTags([]);
+      setIsMinimumViableDay(false);
+      onClose();
+    },
+  });
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [mood, setMood] = useState<number | undefined>(undefined);
   const [energy, setEnergy] = useState<number | undefined>(undefined);
@@ -103,41 +122,14 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
     });
   };
 
-  const handleClearDay = () => {
+  const handleDeleteDay = () => {
     const confirmed = window.confirm(
-      "Are you sure you want to clear all data for this day? This action cannot be undone."
+      "Are you sure you want to delete all data for this day? This action cannot be undone."
     );
 
     if (!confirmed) return;
 
-    startTransition(async () => {
-      try {
-        await clearDayEntry(date);
-        
-        // Reset local form state to defaults
-        setInvestments(
-          INVESTMENT_CATEGORIES.map((cat) => ({
-            id: `${date}-${cat}`,
-            category: cat,
-            score: 0,
-          }))
-        );
-        setMood(undefined);
-        setEnergy(undefined);
-        setNote("");
-        setTags([]);
-        setIsMinimumViableDay(false);
-
-        // Refresh router to fetch updated data from server
-        router.refresh();
-
-        toast.success("Day cleared successfully.");
-        onClose();
-      } catch (error) {
-        toast.error("Failed to clear day. Please try again.");
-        console.error(error);
-      }
-    });
+    deleteDayAction(date);
   };
 
   const formattedDate = new Date(date + "T00:00:00").toLocaleDateString(
@@ -205,17 +197,17 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
           <button
             type="button"
             className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors"
-            onClick={handleClearDay}
-            disabled={isPending}
+            onClick={handleDeleteDay}
+            disabled={isPending || isDeletePending}
           >
-            Clear day
+            Delete day
           </button>
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose} disabled={isPending}>
+            <Button variant="outline" onClick={onClose} disabled={isPending || isDeletePending}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isPending}>
+            <Button onClick={handleSave} disabled={isPending || isDeletePending}>
               {isPending ? "Saving..." : "Save"}
             </Button>
           </div>

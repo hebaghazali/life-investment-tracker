@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useState } from "react";
 import type { DayEntry } from "@/lib/types";
-import { clearDayEntry } from "@/app/actions/dayEntry";
+import { useDeleteDay } from "@/hooks/useDeleteDay";
 import { DayCell } from "./DayCell";
 import { DayDetailModal } from "./DayDetailModal";
 import { DayPreviewDrawer } from "./DayPreviewDrawer";
@@ -24,8 +22,6 @@ export function MonthCalendar({
   initialMonth,
   onMonthChange,
 }: MonthCalendarProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [currentYear, setCurrentYear] = useState(initialYear);
   const [currentMonth, setCurrentMonth] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -125,21 +121,16 @@ export function MonthCalendar({
     setIsEditModalOpen(true);
   };
 
+  const { deleteDay } = useDeleteDay({
+    onSuccess: () => {
+      setIsPreviewOpen(false);
+      setSelectedDate(null);
+    },
+  });
+
   const handlePreviewDelete = () => {
     if (!selectedDate) return;
-
-    startTransition(async () => {
-      try {
-        await clearDayEntry(selectedDate);
-        router.refresh();
-        toast.success("Day deleted successfully.");
-        setIsPreviewOpen(false);
-        setSelectedDate(null);
-      } catch (error) {
-        toast.error("Failed to delete day. Please try again.");
-        console.error(error);
-      }
-    });
+    deleteDay(selectedDate);
   };
 
   const handleEditModalClose = () => {
