@@ -9,9 +9,11 @@ A personal journaling app to track how you invest in different areas of your lif
 - **Styling**: Tailwind CSS
 - **Database**: PostgreSQL (via managed providers like Neon, Supabase, or Railway)
 - **ORM**: Prisma
+- **Authentication**: Neon Auth (Stack Auth)
 
 ## Features
 
+- **Multi-User Support**: Each user has their own isolated data via Neon Auth
 - **Today**: Log your daily investments across 6 life categories (0-3 score each)
 - **Calendar**: View your investment history with intensity heatmap
 - **Insights**: (Coming soon) Analytics and trends
@@ -22,6 +24,17 @@ Each entry can include:
 - Reflection notes
 - Tags for categorization
 - Minimum Viable Day (MVD) marker
+
+### Authentication
+
+The app uses **Neon Auth** (powered by Stack Auth) for user management. Features:
+- Secure sign-up and sign-in
+- Email verification
+- Password reset
+- User profile management
+- Automatic data isolation (each user only sees their own entries)
+
+See [NEON_AUTH_SETUP.md](./NEON_AUTH_SETUP.md) for setup instructions.
 
 ## Getting Started
 
@@ -89,17 +102,36 @@ Each entry can include:
    pnpm db:push
    ```
 
-5. (Optional) Seed with sample data:
+5. **Configure Authentication** (Required for multi-user support):
+   
+   The app uses Neon Auth for user authentication. You have two options:
+   
+   **Option A: Development Mode** (Quick start without auth)
+   - The app will work with a mock user (`dev-user`)
+   - Perfect for testing the UI and features
+   - See [QUICK_START.md](./QUICK_START.md) for details
+   
+   **Option B: Production Auth Setup**
+   - Provision Neon Auth from your Neon Console
+   - Add these to your `.env`:
+     ```env
+     NEXT_PUBLIC_STACK_PROJECT_ID="proj_..."
+     NEXT_PUBLIC_STACK_PUBLISHABLE_CLIENT_KEY="pkey_..."
+     STACK_SECRET_SERVER_KEY="skey_..."
+     ```
+   - Full instructions in [NEON_AUTH_SETUP.md](./NEON_AUTH_SETUP.md)
+
+6. (Optional) Seed with sample data:
    ```bash
    pnpm db:seed
    ```
 
-6. Start the development server:
+7. Start the development server:
    ```bash
    pnpm dev
    ```
 
-7. Open [http://localhost:3000](http://localhost:3000) in your browser.
+8. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 
@@ -132,20 +164,32 @@ Each entry can include:
 
 ### DayEntry
 - `id`: Unique identifier (CUID)
-- `date`: Date of the entry (unique)
+- `userId`: User identifier from Neon Auth
+- `date`: Date of the entry
 - `mood`: Mood level (1-5, optional)
 - `energy`: Energy level (1-5, optional)
 - `note`: Reflection note (optional)
 - `isMinimumViableDay`: MVD flag
 - `tags`: JSON array of tags
 - `investments`: Related Investment records
+- **Unique Constraint**: `(userId, date)` - One entry per user per day
 
 ### Investment
 - `id`: Unique identifier (CUID)
 - `dayId`: Reference to DayEntry
-- `category`: Investment category (career, health, etc.)
+- `categoryId`: Reference to InvestmentCategory
 - `score`: Score (0-3)
 - `comment`: Optional comment
+
+### InvestmentCategory
+- `id`: Unique identifier (CUID)
+- `name`: Category name (career, health, relationships, etc.)
+- `displayName`: Human-readable name
+- `description`: Category description
+- `color`: UI color
+- `icon`: Icon identifier
+
+See [AUTH_ARCHITECTURE.md](./AUTH_ARCHITECTURE.md) for detailed authentication architecture.
 
 ## Scripts
 

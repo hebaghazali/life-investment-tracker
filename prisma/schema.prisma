@@ -9,7 +9,8 @@ datasource db {
 
 model DayEntry {
   id               String       @id @default(cuid())
-  date             DateTime     @unique
+  userId           String       // Neon Auth user id
+  date             DateTime
   mood             Int?
   energy           Int?
   note             String?
@@ -18,6 +19,8 @@ model DayEntry {
   updatedAt        DateTime     @updatedAt
   investments      Investment[]
   tags             String       @default("[]") // JSON array stored as string
+
+  @@unique([userId, date]) // one entry per user per day
 }
 
 model InvestmentCategory {

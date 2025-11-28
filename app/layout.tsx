@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import { Header } from "@/components/layout/Header";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackServerApp } from "@/lib/stack";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,13 +19,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div className="min-h-screen bg-background">
-          <Header />
-          <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-            {children}
-          </main>
-        </div>
-        <Toaster position="bottom-right" />
+        <StackProvider app={stackServerApp}>
+          <StackTheme>
+            <div className="min-h-screen bg-background">
+              <Header />
+              <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+                {children}
+              </main>
+            </div>
+            <Toaster position="bottom-right" />
+          </StackTheme>
+        </StackProvider>
       </body>
     </html>
   );

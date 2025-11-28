@@ -46,9 +46,14 @@ async function main() {
 
     const date = new Date(Date.UTC(currentYear, currentMonth, day));
 
-    // Check if entry already exists
+    // Check if entry already exists for dev user
     const existing = await prisma.dayEntry.findUnique({
-      where: { date },
+      where: { 
+        userId_date: {
+          userId: "dev-user",
+          date,
+        }
+      },
     });
 
     if (existing) {
@@ -63,6 +68,7 @@ async function main() {
 
     await prisma.dayEntry.create({
       data: {
+        userId: "dev-user",
         date,
         mood: randomMood(),
         energy: randomEnergy(),

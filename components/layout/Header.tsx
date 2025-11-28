@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { UserButton, useUser } from "@stackframe/stack";
 
 const navLinks = [
   { href: "/today", label: "Today" },
@@ -12,6 +13,7 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const user = useUser();
 
   return (
     <header className="border-b border-border bg-card">
@@ -21,7 +23,7 @@ export function Header() {
             Life Investment Journal
           </h1>
 
-          <nav className="flex gap-6">
+          <nav className="flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -36,6 +38,19 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            
+            <div className="ml-4">
+              {user ? (
+                <UserButton />
+              ) : (
+                <Link
+                  href="/handler/sign-in"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
           </nav>
         </div>
       </div>
