@@ -7,6 +7,7 @@ import { UserButton, useUser } from "@stackframe/stack";
 import { isDemoUser } from "@/lib/demoGuard";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuthLoading } from "@/contexts/AuthLoadingContext";
 
 const navLinks = [
   { href: "/today", label: "Today" },
@@ -17,6 +18,13 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const user = useUser();
+  const { setIsSigningOut } = useAuthLoading();
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    // Stack Auth will handle the redirect, loading state persists until unmount
+    await user?.signOut();
+  };
 
   return (
     <header className="border-b border-border bg-card">
@@ -55,7 +63,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => user.signOut()}
+                      onClick={handleSignOut}
                       className="text-sm cursor-pointer"
                     >
                       Sign Out

@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import { DEMO_ACCOUNT_EMAIL } from "@/lib/constants";
 import { isDemoUser } from "@/lib/demoGuard";
-import { Info, Copy, Check, Loader2 } from "lucide-react";
+import { Info, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useAuthLoading } from "@/contexts/AuthLoadingContext";
 
 interface AuthPageWrapperProps {
   children: ReactNode;
@@ -141,14 +142,14 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useUser();
+  const { setIsSigningIn } = useAuthLoading();
   
   const isDemo = isDemoUser(user);
   const isAccountSettingsPage = pathname?.includes('/handler/account-settings');
   const isSignInPage = pathname?.includes('/handler/sign-in');
   const isSignUpPage = pathname?.includes('/handler/sign-up');
   
-  // Track authentication loading state
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  // Track previous user state to detect authentication
   const previousUserRef = useRef(user);
   
   // Detect when user just authenticated and show loading state during redirect
@@ -159,14 +160,14 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
     
     // User just logged in or signed up while on an auth page
     if (wasUnauthenticated && isNowAuthenticated && isOnAuthPage) {
-      setIsAuthenticating(true);
+      setIsSigningIn(true);
       // Stack Auth will automatically redirect to /today
       // Loading state will remain until component unmounts during navigation
     }
     
     // Update ref for next render
     previousUserRef.current = user;
-  }, [user, isSignInPage, isSignUpPage]);
+  }, [user, isSignInPage, isSignUpPage, setIsSigningIn]);
   
   // Block demo user from accessing account settings where they could change password
   useEffect(() => {
@@ -203,21 +204,6 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
             </p>
           </div>
         </Card>
-      </div>
-    );
-  }
-  
-  // Show loading overlay when authentication is in progress
-  if (isAuthenticating) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold">Signing you in...</h2>
-            <p className="text-sm text-muted-foreground">Please wait while we authenticate your account</p>
-          </div>
-        </div>
       </div>
     );
   }
