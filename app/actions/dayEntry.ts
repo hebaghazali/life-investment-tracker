@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import type { Investment, InvestmentCategory } from "@/lib/types";
 import { requireUser } from "@/lib/auth";
+import { normalizeDayDate } from "@/lib/dateUtils";
 
 export interface SaveDayEntryInput {
   date: string; // ISO date string "YYYY-MM-DD"
@@ -19,9 +20,18 @@ export interface SaveDayEntryInput {
   tags: string[];
 }
 
+/**
+ * Saves or updates a day entry for the authenticated user.
+ * 
+ * Enforces one entry per user per day via unique constraint on (userId, date).
+ * Multiple saves for the same date will update the existing entry.
+ * 
+ * Assumption: No duplicate (userId, date) rows exist since the unique constraint
+ * has been enforced by migration 20251128164524_add_user_id_to_day_entry.
+ */
 export async function saveDayEntry(input: SaveDayEntryInput) {
   const user = await requireUser();
-  const dateObj = new Date(input.date + "T00:00:00.000Z");
+  const dateObj = normalizeDayDate(input.date);
 
   // Get category IDs from category names
   const categoryMap = new Map<string, string>();
@@ -37,54 +47,47 @@ export async function saveDayEntry(input: SaveDayEntryInput) {
   
   categories.forEach(cat => categoryMap.set(cat.name, cat.id));
 
-  // Check if entry exists for this user and date
-  const existing = await prisma.dayEntry.findUnique({
-    where: { 
-      userId_date: {
-        userId: user.id,
-        date: dateObj,
-      }
-    },
-    include: { investments: true },
+  // Prepare investment data
+  const investmentData = input.investments.map((inv) => {
+    const categoryId = categoryMap.get(inv.category);
+    if (!categoryId) {
+      throw new Error(`Category not found: ${inv.category}`);
+    }
+    return {
+      categoryId,
+      score: inv.score,
+      comment: inv.comment,
+    };
   });
 
-  if (existing) {
-    // Update existing entry
-    await prisma.$transaction(async (tx) => {
-      // Delete existing investments
+  // Use upsert with transaction to handle investments atomically
+  await prisma.$transaction(async (tx) => {
+    // Delete existing investments first (if entry exists)
+    const existing = await tx.dayEntry.findUnique({
+      where: { 
+        userId_date: {
+          userId: user.id,
+          date: dateObj,
+        }
+      },
+      select: { id: true }
+    });
+    
+    if (existing) {
       await tx.investment.deleteMany({
         where: { dayId: existing.id },
       });
+    }
 
-      // Update entry with new investments
-      await tx.dayEntry.update({
-        where: { id: existing.id },
-        data: {
-          mood: input.mood,
-          energy: input.energy,
-          note: input.note,
-          isMinimumViableDay: input.isMinimumViableDay ?? false,
-          tags: JSON.stringify(input.tags),
-          investments: {
-            create: input.investments.map((inv) => {
-              const categoryId = categoryMap.get(inv.category);
-              if (!categoryId) {
-                throw new Error(`Category not found: ${inv.category}`);
-              }
-              return {
-                categoryId,
-                score: inv.score,
-                comment: inv.comment,
-              };
-            }),
-          },
-        },
-      });
-    });
-  } else {
-    // Create new entry
-    await prisma.dayEntry.create({
-      data: {
+    // Upsert the entry (create or update atomically)
+    await tx.dayEntry.upsert({
+      where: {
+        userId_date: {
+          userId: user.id,
+          date: dateObj,
+        }
+      },
+      create: {
         userId: user.id,
         date: dateObj,
         mood: input.mood,
@@ -93,21 +96,21 @@ export async function saveDayEntry(input: SaveDayEntryInput) {
         isMinimumViableDay: input.isMinimumViableDay ?? false,
         tags: JSON.stringify(input.tags),
         investments: {
-          create: input.investments.map((inv) => {
-            const categoryId = categoryMap.get(inv.category);
-            if (!categoryId) {
-              throw new Error(`Category not found: ${inv.category}`);
-            }
-            return {
-              categoryId,
-              score: inv.score,
-              comment: inv.comment,
-            };
-          }),
+          create: investmentData,
+        },
+      },
+      update: {
+        mood: input.mood,
+        energy: input.energy,
+        note: input.note,
+        isMinimumViableDay: input.isMinimumViableDay ?? false,
+        tags: JSON.stringify(input.tags),
+        investments: {
+          create: investmentData,
         },
       },
     });
-  }
+  });
 
   revalidatePath("/today");
   revalidatePath("/calendar");
@@ -116,7 +119,7 @@ export async function saveDayEntry(input: SaveDayEntryInput) {
 
 export async function getDayEntry(date: string) {
   const user = await requireUser();
-  const dateObj = new Date(date + "T00:00:00.000Z");
+  const dateObj = normalizeDayDate(date);
 
   const entry = await prisma.dayEntry.findUnique({
     where: { 
@@ -228,7 +231,7 @@ export async function getAllEntries() {
 
 export async function clearDayEntry(date: string) {
   const user = await requireUser();
-  const dateObj = new Date(date + "T00:00:00.000Z");
+  const dateObj = normalizeDayDate(date);
 
   // Find the entry for this user and date
   const existing = await prisma.dayEntry.findUnique({
