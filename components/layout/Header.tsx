@@ -56,7 +56,7 @@ export function Header() {
                       variant="ghost"
                       size="sm"
                       onClick={() => user.signOut()}
-                      className="text-sm"
+                      className="text-sm cursor-pointer"
                     >
                       Sign Out
                     </Button>
