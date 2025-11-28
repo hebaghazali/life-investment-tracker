@@ -2,23 +2,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-type InvestmentCategory =
-  | "career"
-  | "health"
-  | "relationships"
-  | "wellbeing"
-  | "meaning"
-  | "environment";
-
-const categories: InvestmentCategory[] = [
-  "career",
-  "health",
-  "relationships",
-  "wellbeing",
-  "meaning",
-  "environment",
-];
-
 const sampleTags = ["deep-work", "social", "rest", "focused", "creative"];
 
 function randomScore() {
@@ -35,6 +18,19 @@ function randomEnergy() {
 
 async function main() {
   console.log("🌱 Seeding database...");
+
+  // Fetch investment categories from database
+  const categories = await prisma.investmentCategory.findMany({
+    orderBy: { name: "asc" },
+  });
+
+  if (categories.length === 0) {
+    console.error("❌ No investment categories found in database!");
+    console.log("Please ensure the migration has been run to seed categories.");
+    process.exit(1);
+  }
+
+  console.log(`📊 Found ${categories.length} investment categories`);
 
   const today = new Date();
   const currentMonth = today.getMonth();
@@ -76,7 +72,7 @@ async function main() {
         tags: JSON.stringify(tags),
         investments: {
           create: categories.map((category) => ({
-            category,
+            categoryId: category.id,
             score: randomScore(),
           })),
         },
