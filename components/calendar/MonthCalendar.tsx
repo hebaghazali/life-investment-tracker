@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { DayEntry } from "@/lib/types";
+import { clearDayEntry } from "@/app/actions/dayEntry";
 import { DayCell } from "./DayCell";
 import { DayDetailModal } from "./DayDetailModal";
+import { DayPreviewDrawer } from "./DayPreviewDrawer";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -20,9 +24,14 @@ export function MonthCalendar({
   initialMonth,
   onMonthChange,
 }: MonthCalendarProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [currentYear, setCurrentYear] = useState(initialYear);
   const [currentMonth, setCurrentMonth] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editDate, setEditDate] = useState<string | null>(null);
 
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
   const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
@@ -93,7 +102,11 @@ export function MonthCalendar({
         day={day}
         entry={entry}
         isToday={isToday(day)}
-        onClick={() => setSelectedDate(getDateString(day))}
+        onClick={() => {
+          const dateStr = getDateString(day);
+          setSelectedDate(dateStr);
+          setIsPreviewOpen(true);
+        }}
       />
     );
   }
@@ -101,6 +114,39 @@ export function MonthCalendar({
   const selectedEntry = selectedDate
     ? entries.find((e) => e.date === selectedDate)
     : undefined;
+
+  const editEntry = editDate
+    ? entries.find((e) => e.date === editDate)
+    : undefined;
+
+  const handlePreviewEdit = () => {
+    setIsPreviewOpen(false);
+    setEditDate(selectedDate);
+    setIsEditModalOpen(true);
+  };
+
+  const handlePreviewDelete = () => {
+    if (!selectedDate) return;
+
+    startTransition(async () => {
+      try {
+        await clearDayEntry(selectedDate);
+        router.refresh();
+        toast.success("Day deleted successfully.");
+        setIsPreviewOpen(false);
+        setSelectedDate(null);
+      } catch (error) {
+        toast.error("Failed to delete day. Please try again.");
+        console.error(error);
+      }
+    });
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditDate(null);
+    setSelectedDate(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -131,12 +177,27 @@ export function MonthCalendar({
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-2">{calendarDays}</div>
 
-      {/* Day detail modal */}
+      {/* Day preview drawer */}
       {selectedDate && (
-        <DayDetailModal
+        <DayPreviewDrawer
           date={selectedDate}
           entry={selectedEntry}
-          onClose={() => setSelectedDate(null)}
+          isOpen={isPreviewOpen}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            setSelectedDate(null);
+          }}
+          onEdit={handlePreviewEdit}
+          onDelete={handlePreviewDelete}
+        />
+      )}
+
+      {/* Day edit modal */}
+      {editDate && isEditModalOpen && (
+        <DayDetailModal
+          date={editDate}
+          entry={editEntry}
+          onClose={handleEditModalClose}
         />
       )}
     </div>
