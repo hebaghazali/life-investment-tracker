@@ -1,7 +1,15 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { getDayEntry } from "@/app/actions/dayEntry";
 import { TodayForm } from "./TodayForm";
 
 export default async function TodayPage() {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    redirect("/handler/sign-in");
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const entry = await getDayEntry(today);
 

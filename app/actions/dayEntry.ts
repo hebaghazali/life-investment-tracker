@@ -28,6 +28,13 @@ export async function saveDayEntry(input: SaveDayEntryInput) {
   const categories = await prisma.investmentCategory.findMany({
     select: { id: true, name: true },
   });
+  
+  if (categories.length === 0) {
+    throw new Error(
+      "Investment categories are not set up. Please run database migrations to seed categories."
+    );
+  }
+  
   categories.forEach(cat => categoryMap.set(cat.name, cat.id));
 
   // Check if entry exists for this user and date

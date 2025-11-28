@@ -1,7 +1,14 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { BarChart3, TrendingUp, Download } from "lucide-react";
 
-export default function InsightsPage() {
+export default async function InsightsPage() {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    redirect("/handler/sign-in");
+  }
   return (
     <div className="space-y-6">
       <div>

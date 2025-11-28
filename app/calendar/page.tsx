@@ -1,7 +1,15 @@
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
 import { getEntriesForMonth } from "@/app/actions/dayEntry";
 import { CalendarClient } from "./CalendarClient";
 
 export default async function CalendarPage() {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    redirect("/handler/sign-in");
+  }
+
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
