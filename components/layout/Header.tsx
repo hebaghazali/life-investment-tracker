@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { UserButton, useUser } from "@stackframe/stack";
+import { isDemoUser } from "@/lib/demoGuard";
+import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { href: "/today", label: "Today" },
@@ -41,7 +44,26 @@ export function Header() {
             
             <div className="ml-4">
               {user ? (
-                <UserButton />
+                isDemoUser(user) ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900">
+                      <Lock className="h-3.5 w-3.5 text-amber-700 dark:text-amber-300" />
+                      <span className="text-xs font-medium text-amber-800 dark:text-amber-200">
+                        Demo Mode
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => user.signOut()}
+                      className="text-sm"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <UserButton />
+                )
               ) : (
                 <Link
                   href="/handler/sign-in"

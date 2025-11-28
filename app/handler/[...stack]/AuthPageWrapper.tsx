@@ -14,7 +14,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { DEMO_ACCOUNT_EMAIL } from "@/lib/constants";
+import { isDemoUser } from "@/lib/demoGuard";
 import { Info, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface AuthPageWrapperProps {
   children: ReactNode;
@@ -140,19 +142,32 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
   const router = useRouter();
   const user = useUser();
   
-  const isDemoUser = user?.primaryEmail === DEMO_ACCOUNT_EMAIL;
+  const isDemo = isDemoUser(user);
   const isAccountSettingsPage = pathname?.includes('/handler/account-settings');
   const isSignInPage = pathname?.includes('/handler/sign-in');
   
   // Block demo user from accessing account settings where they could change password
   useEffect(() => {
-    if (isDemoUser && isAccountSettingsPage) {
+    if (isDemo && isAccountSettingsPage) {
+      toast.error("Account settings are disabled for the demo account. Please create your own account to access these features.");
       router.push('/today');
     }
-  }, [isDemoUser, isAccountSettingsPage, router]);
+  }, [isDemo, isAccountSettingsPage, router]);
+  
+  // Check if user was redirected due to demo restriction
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo-restricted') === 'true') {
+      toast.error("This feature is disabled for the demo account. Please create your own account.");
+      // Clean up the URL parameter
+      const url = new URL(window.location.href);
+      url.searchParams.delete('demo-restricted');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [pathname]);
   
   // Don't render account settings for demo user (prevents flash before redirect)
-  if (isDemoUser && isAccountSettingsPage) {
+  if (isDemo && isAccountSettingsPage) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="max-w-md border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
