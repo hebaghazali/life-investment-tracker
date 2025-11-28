@@ -9,6 +9,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MoodEnergyChart } from "@/components/insights/MoodEnergyChart";
 import { CategoryBalanceChart } from "@/components/insights/CategoryBalanceChart";
+import { InsightsConsistencySection } from "@/components/insights/InsightsConsistencySection";
+import { InsightsMvdSection } from "@/components/insights/InsightsMvdSection";
+import { InsightsTagsSection } from "@/components/insights/InsightsTagsSection";
 
 interface InsightsPageClientProps {
   initialData: InsightsData;
@@ -123,8 +126,10 @@ export function InsightsPageClient({
     };
   }, [initialData, selectedRange]);
 
-  // Check if we have any data
-  const hasData = filteredData.aggregates.totalDaysLogged > 0;
+  // Check data states for UX logic
+  const hasAnyData = initialData.aggregates.totalDaysLogged > 0;
+  const hasDataInRange = filteredData.aggregates.totalDaysLogged > 0;
+  const isLimitedData = hasDataInRange && filteredData.aggregates.totalDaysLogged <= 2;
 
   // Calculate total days in filtered range
   const totalDaysInRange = filteredData.days.length;
@@ -143,7 +148,8 @@ export function InsightsPageClient({
     }
   };
 
-  if (!hasData) {
+  // No data at all - show centered empty state
+  if (!hasAnyData) {
     return (
       <div className="space-y-6">
         <div>
@@ -155,14 +161,20 @@ export function InsightsPageClient({
 
         <Card className="p-12 text-center">
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            No data yet
+            No insights yet
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Start logging your daily investments to see insights here.
+            Once you log a few days in Today or Calendar, you'll start seeing
+            patterns here.
           </p>
-          <Button asChild>
-            <Link href="/today">Log Today</Link>
-          </Button>
+          <div className="flex gap-3 justify-center">
+            <Button asChild>
+              <Link href="/today">Go to Today</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/calendar">Open Calendar</Link>
+            </Button>
+          </div>
         </Card>
       </div>
     );
@@ -317,17 +329,65 @@ export function InsightsPageClient({
         </Card>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <MoodEnergyChart 
-          days={filteredData.days} 
-          range={selectedRange} 
-        />
-        <CategoryBalanceChart
-          aggregates={filteredData.aggregates}
-          selectedCategory={selectedCategory}
-        />
-      </div>
+      {/* Limited data warning */}
+      {isLimitedData && (
+        <Card className="p-4 bg-muted/50">
+          <p className="text-sm text-muted-foreground">
+            Insights may be limited with only {filteredData.aggregates.totalDaysLogged}{" "}
+            {filteredData.aggregates.totalDaysLogged === 1 ? "day" : "days"} logged
+            in this range.
+          </p>
+        </Card>
+      )}
+
+      {/* Data exists but none in current range - show inline empty state */}
+      {!hasDataInRange ? (
+        <Card className="p-12 text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            No entries found in this period
+          </h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Try adjusting your time range to see insights.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => setSelectedRange("last-30-days")}
+              variant="default"
+            >
+              Last 30 days
+            </Button>
+            <Button
+              onClick={() => setSelectedRange("all-time")}
+              variant="outline"
+            >
+              All time
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <>
+          {/* Charts Section */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <MoodEnergyChart 
+              days={filteredData.days} 
+              range={selectedRange} 
+            />
+            <CategoryBalanceChart
+              aggregates={filteredData.aggregates}
+              selectedCategory={selectedCategory}
+            />
+          </div>
+
+          {/* Consistency & Streaks Section */}
+          <InsightsConsistencySection days={filteredData.days} />
+
+          {/* MVD Insights Section */}
+          <InsightsMvdSection days={filteredData.days} />
+
+          {/* Tags Section */}
+          <InsightsTagsSection days={filteredData.days} />
+        </>
+      )}
     </div>
   );
 }

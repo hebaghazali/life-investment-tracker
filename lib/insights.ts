@@ -160,3 +160,118 @@ export function buildInsightsFromEntries(
   };
 }
 
+/**
+ * Calculates streak statistics from an array of DaySummary objects.
+ * 
+ * - currentStreak: consecutive days from the most recent date backwards where totalInvestment > 0
+ * - longestStreak: longest run of consecutive days with investment in the entire range
+ * 
+ * @param days - Array of day summaries (should be sorted by date ascending)
+ * @returns Object with currentStreak and longestStreak counts
+ */
+export function calculateStreaks(days: DaySummary[]): {
+  currentStreak: number;
+  longestStreak: number;
+} {
+  if (days.length === 0) {
+    return { currentStreak: 0, longestStreak: 0 };
+  }
+
+  // Calculate current streak (working backwards from most recent day)
+  let currentStreak = 0;
+  for (let i = days.length - 1; i >= 0; i--) {
+    if (days[i].totalInvestment > 0) {
+      currentStreak++;
+    } else {
+      break; // Stop at first day without investment
+    }
+  }
+
+  // Calculate longest streak
+  let longestStreak = 0;
+  let tempStreak = 0;
+  
+  for (const day of days) {
+    if (day.totalInvestment > 0) {
+      tempStreak++;
+      longestStreak = Math.max(longestStreak, tempStreak);
+    } else {
+      tempStreak = 0;
+    }
+  }
+
+  return { currentStreak, longestStreak };
+}
+
+/**
+ * Analyzes tag usage across days with investment data.
+ * 
+ * For each unique tag, computes:
+ * - count: number of days the tag appears
+ * - avgMood: average mood on days with this tag (null if no mood data)
+ * - avgEnergy: average energy on days with this tag (null if no energy data)
+ * 
+ * @param days - Array of day summaries
+ * @returns Array of tag analytics sorted by count (descending)
+ */
+export function calculateTagAnalytics(days: DaySummary[]): Array<{
+  tag: string;
+  count: number;
+  avgMood: number | null;
+  avgEnergy: number | null;
+}> {
+  // Only consider days with investment data
+  const daysWithInvestment = days.filter((d) => d.totalInvestment > 0);
+
+  // Build a map: tag -> { count, moodSum, moodCount, energySum, energyCount }
+  const tagMap = new Map<
+    string,
+    {
+      count: number;
+      moodSum: number;
+      moodCount: number;
+      energySum: number;
+      energyCount: number;
+    }
+  >();
+
+  for (const day of daysWithInvestment) {
+    for (const tag of day.tags) {
+      const existing = tagMap.get(tag) || {
+        count: 0,
+        moodSum: 0,
+        moodCount: 0,
+        energySum: 0,
+        energyCount: 0,
+      };
+
+      existing.count++;
+
+      if (day.mood !== null) {
+        existing.moodSum += day.mood;
+        existing.moodCount++;
+      }
+
+      if (day.energy !== null) {
+        existing.energySum += day.energy;
+        existing.energyCount++;
+      }
+
+      tagMap.set(tag, existing);
+    }
+  }
+
+  // Transform to array and compute averages
+  const result = Array.from(tagMap.entries()).map(([tag, data]) => ({
+    tag,
+    count: data.count,
+    avgMood: data.moodCount > 0 ? data.moodSum / data.moodCount : null,
+    avgEnergy: data.energyCount > 0 ? data.energySum / data.energyCount : null,
+  }));
+
+  // Sort by count descending
+  result.sort((a, b) => b.count - a.count);
+
+  return result;
+}
+
