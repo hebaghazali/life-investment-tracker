@@ -1,177 +1,139 @@
-# Life Investment Tracker
+# Life Investment Journal
 
-A calm, personal web app that helps you track how you invest in different life areas every day and visualize your progress on a monthly calendar.
+A personal journaling app to track how you invest in different areas of your life each day - career, health, relationships, wellbeing, meaning, and environment.
 
 ## Tech Stack
 
-- **Next.js 14+** (App Router, TypeScript)
-- **Tailwind CSS** for styling
-- **Prisma ORM** for database access
-- **SQLite** for local development (PostgreSQL ready for production)
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: SQLite (development) / PostgreSQL (production-ready)
+- **ORM**: Prisma
 
 ## Features
 
-### Today Page
-- Quick daily logging interface
-- Track investments across 6 life categories (career, health, relationships, wellbeing, meaning, environment)
-- Rate each category from 0-3
-- Log mood and energy (1-5)
-- Add a short daily reflection note
-- Auto-saves to your local database
+- **Today**: Log your daily investments across 6 life categories (0-3 score each)
+- **Calendar**: View your investment history with intensity heatmap
+- **Insights**: (Coming soon) Analytics and trends
 
-### Calendar Page
-- Monthly calendar view of all your entries
-- Visual intensity indicators using color coding
-- Month navigation (previous/next)
-- Quick stats: days logged, high mood days, average intensity
-- Legend showing intensity levels
-
-### Design Philosophy
-- Low friction: complete an entry in under a minute
-- Calm aesthetics: muted greens and blues, no aggressive colors
-- Private and local: all data stays on your machine (SQLite)
-- No authentication needed: single-user app
-- Server-first architecture using Next.js Server Components
+Each entry can include:
+- Investment scores for each category
+- Mood and energy levels (1-5)
+- Reflection notes
+- Tags for categorization
+- Minimum Viable Day (MVD) marker
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ (LTS recommended)
-- npm, pnpm, or yarn
+- Node.js 18+
+- pnpm (recommended) or npm
 
 ### Installation
 
-1. **Clone or download this repository**
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd life-investment-journal
+   ```
 
-```bash
-cd life-investment-tracker
-```
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-2. **Install dependencies**
+3. Set up the environment:
+   ```bash
+   # Create .env file with database URL
+   echo 'DATABASE_URL="file:./dev.db"' > .env
+   ```
 
-```bash
-npm install
-```
+4. Initialize the database:
+   ```bash
+   pnpm db:push
+   ```
 
-3. **Set up the database**
+5. (Optional) Seed with sample data:
+   ```bash
+   pnpm db:seed
+   ```
 
-The `.env` file should already be configured with:
-```
-DATABASE_URL="file:./dev.db"
-```
+6. Start the development server:
+   ```bash
+   pnpm dev
+   ```
 
-Run Prisma migrations to create the database:
-
-```bash
-npm run db:migrate
-```
-
-This will create a `dev.db` SQLite file in the `prisma` directory with the required tables.
-
-4. **Start the development server**
-
-```bash
-npm run dev
-```
-
-5. **Open the app**
-
-Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Available Scripts
-
-- `npm run dev` - Start the development server
-- `npm run build` - Build for production
-- `npm start` - Start the production server
-- `npm run lint` - Run ESLint
-- `npm run db:migrate` - Run Prisma migrations
-- `npm run db:studio` - Open Prisma Studio (database GUI)
+7. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 
 ```
-life-investment-tracker/
-├── app/
-│   ├── calendar/
-│   │   └── page.tsx          # Calendar view with monthly grid
-│   ├── today/
-│   │   ├── actions.ts        # Server actions for saving entries
-│   │   ├── page.tsx          # Today page (server component)
-│   │   └── TodayForm.tsx     # Client form component
-│   ├── globals.css
-│   ├── layout.tsx            # Root layout with navigation
-│   └── page.tsx              # Home page (redirects to /today)
-├── lib/
-│   ├── prisma.ts             # Prisma client singleton
-│   ├── constants.ts          # Investment categories and labels
-│   ├── types.ts              # TypeScript types
-│   └── scoring.ts            # Day intensity calculation
-├── prisma/
-│   ├── schema.prisma         # Database schema
-│   └── dev.db                # SQLite database (created after migration)
-└── package.json
+├── app/                    # Next.js App Router
+│   ├── actions/           # Server Actions
+│   │   └── dayEntry.ts    # CRUD operations for entries
+│   ├── calendar/          # Calendar page
+│   ├── insights/          # Insights page
+│   ├── today/             # Today page
+│   ├── globals.css        # Global styles
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home (redirects to /today)
+├── components/            # React components
+│   ├── calendar/          # Calendar-specific components
+│   ├── layout/            # Layout components (Header)
+│   ├── today/             # Today page components
+│   └── ui/                # Reusable UI components
+├── lib/                   # Utilities
+│   ├── prisma.ts          # Prisma client singleton
+│   ├── types.ts           # TypeScript types
+│   └── utils.ts           # Utility functions
+├── prisma/                # Database
+│   ├── schema.prisma      # Database schema
+│   └── seed.ts            # Seed script
+└── public/                # Static assets
 ```
 
-## Data Model
+## Database Schema
 
 ### DayEntry
-- `id`: Unique identifier (cuid)
-- `date`: Date of the entry (unique, normalized to start of day)
-- `mood`: Optional mood rating (1-5)
-- `energy`: Optional energy rating (1-5)
-- `note`: Optional short reflection text
+- `id`: Unique identifier (CUID)
+- `date`: Date of the entry (unique)
+- `mood`: Mood level (1-5, optional)
+- `energy`: Energy level (1-5, optional)
+- `note`: Reflection note (optional)
+- `isMinimumViableDay`: MVD flag
+- `tags`: JSON array of tags
 - `investments`: Related Investment records
 
 ### Investment
-- `id`: Unique identifier (cuid)
+- `id`: Unique identifier (CUID)
 - `dayId`: Reference to DayEntry
-- `category`: One of the 6 life categories
-- `score`: Investment score (0-3)
-- `comment`: Optional comment for this investment
+- `category`: Investment category (career, health, etc.)
+- `score`: Score (0-3)
+- `comment`: Optional comment
 
-## Customization
+## Scripts
 
-### Adding or Changing Categories
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server |
+| `pnpm build` | Build for production |
+| `pnpm start` | Start production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm db:generate` | Generate Prisma client |
+| `pnpm db:push` | Push schema to database |
+| `pnpm db:studio` | Open Prisma Studio |
+| `pnpm db:seed` | Seed database with sample data |
 
-Edit `lib/constants.ts`:
+## Production Deployment
 
-```typescript
-export const INVESTMENT_CATEGORIES = [
-  "career",
-  "health",
-  // Add your own categories here
-] as const;
+For production, update `DATABASE_URL` in your environment to point to a PostgreSQL database:
 
-export const CATEGORY_LABELS = {
-  career: "Your Custom Label",
-  health: "Another Label",
-  // Add labels for your categories
-};
+```env
+DATABASE_URL="postgresql://user:password@host:5432/database"
 ```
 
-### Changing Colors
-
-The app uses Tailwind CSS. Main color classes:
-- Primary: `emerald-*` (green)
-- Secondary: `sky-*` (blue)
-- Background: `slate-50` or `zinc-50`
-
-Edit these in the component files or update `tailwind.config.ts` for global theme changes.
-
-## Deployment (Production)
-
-### Using PostgreSQL
-
-1. Create a PostgreSQL database (e.g., on [Neon](https://neon.tech), [Supabase](https://supabase.com), or [Railway](https://railway.app))
-
-2. Update `.env` with your PostgreSQL connection string:
-
-```bash
-DATABASE_URL="postgresql://user:password@host:5432/dbname"
-```
-
-3. Update `prisma/schema.prisma` datasource:
+Then update `prisma/schema.prisma`:
 
 ```prisma
 datasource db {
@@ -180,48 +142,12 @@ datasource db {
 }
 ```
 
-4. Run migrations:
-
+And run:
 ```bash
-npx prisma migrate deploy
+pnpm db:generate
+pnpm db:push
 ```
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-
-2. Import your repository on [Vercel](https://vercel.com)
-
-3. Add your `DATABASE_URL` environment variable in Vercel settings
-
-4. Deploy!
-
-## Future Enhancements
-
-Ideas for v2 and beyond:
-- Click on calendar days to view/edit past entries
-- Weekly and monthly summary charts
-- Export data to CSV or JSON
-- Tags for days (rest day, deep work, social, etc.)
-- Trends and insights page
-- Dark mode
-- Mobile app version
-
-## Philosophy
-
-This app is intentionally simple and personal. It's designed to:
-- Encourage daily reflection without overwhelming you
-- Make consistency visible at a glance
-- Stay private (no cloud services required in local mode)
-- Be easy to extend as your tracking needs evolve
-
-There are no streaks, no gamification, no social features. Just you and your data.
 
 ## License
 
-MIT - feel free to use this for personal or educational purposes.
-
----
-
-Built with Next.js, Prisma, and Tailwind CSS.
-
+MIT

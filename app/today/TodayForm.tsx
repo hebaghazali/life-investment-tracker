@@ -1,185 +1,139 @@
 "use client";
 
-import { useState } from "react";
-import { INVESTMENT_CATEGORIES, CATEGORY_LABELS } from "@/lib/constants";
-import { saveDayEntry } from "./actions";
-
-interface Investment {
-  category: string;
-  score: number;
-  comment: string;
-}
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import type { DayEntry, Investment, InvestmentCategory } from "@/lib/types";
+import { INVESTMENT_CATEGORIES } from "@/lib/types";
+import { saveDayEntry } from "@/app/actions/dayEntry";
+import { InvestmentCategory as InvestmentCategoryComponent } from "@/components/today/InvestmentCategory";
+import { MoodEnergySelector } from "@/components/today/MoodEnergySelector";
+import { ReflectionNote } from "@/components/today/ReflectionNote";
+import { TagSelector } from "@/components/today/TagSelector";
+import { MVDToggle } from "@/components/today/MVDToggle";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface TodayFormProps {
-  initialData: {
-    mood: number | null;
-    energy: number | null;
-    note: string;
-    investments: Investment[];
-  };
+  date: string;
+  initialEntry: DayEntry | null;
 }
 
-export default function TodayForm({ initialData }: TodayFormProps) {
-  const [mood, setMood] = useState<number | null>(initialData.mood);
-  const [energy, setEnergy] = useState<number | null>(initialData.energy);
-  const [note, setNote] = useState(initialData.note);
-  const [investments, setInvestments] = useState<Investment[]>(
-    initialData.investments
-  );
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+export function TodayForm({ date, initialEntry }: TodayFormProps) {
+  const [isPending, startTransition] = useTransition();
 
-  const updateInvestment = (category: string, score: number) => {
-    setInvestments((prev) =>
-      prev.map((inv) =>
-        inv.category === category ? { ...inv, score } : inv
-      )
-    );
+  const [investments, setInvestments] = useState<Investment[]>(() => {
+    if (initialEntry?.investments.length) {
+      return initialEntry.investments;
+    }
+    return INVESTMENT_CATEGORIES.map((cat) => ({
+      id: `${date}-${cat}`,
+      category: cat,
+      score: 0,
+    }));
+  });
+
+  const [mood, setMood] = useState<number | undefined>(
+    initialEntry?.mood ?? undefined
+  );
+  const [energy, setEnergy] = useState<number | undefined>(
+    initialEntry?.energy ?? undefined
+  );
+  const [note, setNote] = useState<string>(initialEntry?.note || "");
+  const [tags, setTags] = useState<string[]>(initialEntry?.tags || []);
+  const [isMinimumViableDay, setIsMinimumViableDay] = useState(
+    initialEntry?.isMinimumViableDay || false
+  );
+
+  const handleScoreChange = (category: InvestmentCategory, score: number) => {
+    setInvestments((prev) => {
+      const existing = prev.find((inv) => inv.category === category);
+      if (existing) {
+        return prev.map((inv) =>
+          inv.category === category ? { ...inv, score } : inv
+        );
+      } else {
+        return [...prev, { id: `${date}-${category}`, category, score }];
+      }
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setMessage("");
-
-    const result = await saveDayEntry({
-      date: new Date(),
-      mood,
-      energy,
-      note,
-      investments,
+  const handleSave = () => {
+    startTransition(async () => {
+      try {
+        await saveDayEntry({
+          date,
+          mood: mood ?? null,
+          energy: energy ?? null,
+          note: note || null,
+          isMinimumViableDay,
+          investments: investments.map((inv) => ({
+            category: inv.category,
+            score: inv.score,
+            comment: inv.comment ?? null,
+          })),
+          tags,
+        });
+        toast.success("Today's entry has been saved successfully.");
+      } catch (error) {
+        toast.error("Failed to save entry. Please try again.");
+        console.error(error);
+      }
     });
-
-    setSaving(false);
-    
-    if (result.success) {
-      setMessage("Saved successfully! 🎉");
-      setTimeout(() => setMessage(""), 3000);
-    } else {
-      setMessage("Error saving. Please try again.");
-    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Investments */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-zinc-200">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4">
-          Life Investments
-        </h3>
-        <div className="space-y-4">
-          {INVESTMENT_CATEGORIES.map((category) => {
-            const investment = investments.find(
-              (inv) => inv.category === category
-            )!;
-            return (
-              <div key={category} className="flex items-center justify-between">
-                <label className="text-zinc-700 font-medium">
-                  {CATEGORY_LABELS[category]}
-                </label>
-                <div className="flex gap-2">
-                  {[0, 1, 2, 3].map((score) => (
-                    <button
-                      key={score}
-                      type="button"
-                      onClick={() => updateInvestment(category, score)}
-                      className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                        investment.score === score
-                          ? "bg-emerald-500 text-white shadow-md"
-                          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                      }`}
-                    >
-                      {score}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <Card className="p-6 space-y-6">
+      {/* Investment Categories */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">
+          How did you invest today?
+        </h2>
+        {INVESTMENT_CATEGORIES.map((category) => {
+          const investment = investments.find(
+            (inv) => inv.category === category
+          );
+          return (
+            <InvestmentCategoryComponent
+              key={category}
+              category={category}
+              score={investment?.score || 0}
+              onScoreChange={(score) => handleScoreChange(category, score)}
+            />
+          );
+        })}
       </div>
 
-      {/* Mood and Energy */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-zinc-200">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4">
-          Mood & Energy
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-zinc-700 font-medium">Mood</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setMood(value)}
-                  className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                    mood === value
-                      ? "bg-sky-500 text-white shadow-md"
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                  }`}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <label className="text-zinc-700 font-medium">Energy</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setEnergy(value)}
-                  className={`w-10 h-10 rounded-lg font-medium transition-all ${
-                    energy === value
-                      ? "bg-sky-500 text-white shadow-md"
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                  }`}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Note */}
-      <div className="bg-white rounded-2xl shadow-sm p-6 border border-zinc-200">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4">
-          Reflection
-        </h3>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="How did today go? Any highlights or learnings?"
-          className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
-          rows={3}
+      {/* Mood & Energy */}
+      <div className="grid gap-6 sm:grid-cols-2">
+        <MoodEnergySelector label="Mood" value={mood} onChange={setMood} />
+        <MoodEnergySelector
+          label="Energy"
+          value={energy}
+          onChange={setEnergy}
         />
       </div>
 
-      {/* Submit button */}
-      <div className="flex items-center gap-4">
-        <button
-          type="submit"
-          disabled={saving}
-          className="px-6 py-3 bg-emerald-500 text-white font-medium rounded-lg hover:bg-emerald-600 transition-colors disabled:bg-zinc-400 disabled:cursor-not-allowed"
-        >
-          {saving ? "Saving..." : "Save Today's Entry"}
-        </button>
-        {message && (
-          <span
-            className={`text-sm font-medium ${
-              message.includes("Error") ? "text-red-600" : "text-emerald-600"
-            }`}
-          >
-            {message}
-          </span>
-        )}
-      </div>
-    </form>
+      {/* Reflection */}
+      <ReflectionNote value={note} onChange={setNote} />
+
+      {/* Tags */}
+      <TagSelector selectedTags={tags} onTagsChange={setTags} />
+
+      {/* MVD Toggle */}
+      <MVDToggle
+        checked={isMinimumViableDay}
+        onCheckedChange={setIsMinimumViableDay}
+      />
+
+      {/* Save Button */}
+      <Button
+        onClick={handleSave}
+        className="w-full sm:w-auto"
+        disabled={isPending}
+      >
+        {isPending ? "Saving..." : "Save Today"}
+      </Button>
+    </Card>
   );
 }
 

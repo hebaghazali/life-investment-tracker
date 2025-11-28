@@ -1,6 +1,61 @@
-import { DayEntry, Investment } from "@prisma/client";
+export type InvestmentCategory =
+  | "career"
+  | "health"
+  | "relationships"
+  | "wellbeing"
+  | "meaning"
+  | "environment";
 
-export type DayEntryWithInvestments = DayEntry & {
+export interface Investment {
+  id: string;
+  category: InvestmentCategory;
+  score: number; // 0-3
+  comment?: string | null;
+}
+
+export interface DayEntry {
+  id: string;
+  date: string; // ISO date string "YYYY-MM-DD"
+  mood?: number | null; // 1-5
+  energy?: number | null; // 1-5
+  note?: string | null;
+  isMinimumViableDay?: boolean | null;
   investments: Investment[];
+  tags: string[];
+}
+
+export const CATEGORY_INFO: Record<
+  InvestmentCategory,
+  { label: string; description: string }
+> = {
+  career: { label: "Career", description: "career, money, skills" },
+  health: { label: "Health", description: "physical health" },
+  relationships: { label: "Relationships", description: "family, friends, social" },
+  wellbeing: { label: "Wellbeing", description: "mental/emotional health" },
+  meaning: { label: "Meaning", description: "values, purpose, spirituality" },
+  environment: {
+    label: "Environment",
+    description: "order, decluttering, surroundings",
+  },
 };
+
+export const INVESTMENT_CATEGORIES: InvestmentCategory[] = [
+  "career",
+  "health",
+  "relationships",
+  "wellbeing",
+  "meaning",
+  "environment",
+];
+
+export const AVAILABLE_TAGS = [
+  "deep-work",
+  "social",
+  "rest",
+  "overwhelmed",
+  "creative",
+  "focused",
+  "distracted",
+  "energized",
+];
 
