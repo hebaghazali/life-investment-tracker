@@ -59,3 +59,42 @@ export const AVAILABLE_TAGS = [
   "energized",
 ];
 
+// ============================================================================
+// Insights Types
+// ============================================================================
+
+export interface DaySummary {
+  date: string; // ISO format YYYY-MM-DD
+  mood: number | null;
+  energy: number | null;
+  totalInvestment: number;
+  categoryScores: Record<InvestmentCategory, number>;
+  isMinimumViableDay: boolean;
+  tags: string[];
+}
+
+export interface CategoryAggregate {
+  total: number;
+  average: number;
+  dayCount: number;
+}
+
+export interface InsightsData {
+  days: DaySummary[];
+  aggregates: {
+    averageMood: number | null;
+    averageEnergy: number | null;
+    totalDaysLogged: number;
+    mvdCount: number;
+    categoryAggregates: Record<InvestmentCategory, CategoryAggregate>;
+    mostInvestedCategory: InvestmentCategory | null;
+    leastInvestedCategory: InvestmentCategory | null;
+  };
+  dateRange: {
+    from: string;
+    to: string;
+  };
+}
+
+export type TimeRange = "last-7-days" | "last-30-days" | "last-90-days" | "all-time";
+
