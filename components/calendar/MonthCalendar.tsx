@@ -68,7 +68,7 @@ export function MonthCalendar({
   };
 
   const getDateString = (day: number) => {
-    return new Date(currentYear, currentMonth, day).toISOString().split("T")[0];
+    return new Date(Date.UTC(currentYear, currentMonth, day)).toISOString().split("T")[0];
   };
 
   const getEntryForDay = (day: number) => {
