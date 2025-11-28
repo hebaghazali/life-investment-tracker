@@ -13,3 +13,9 @@ export const CATEGORY_COLORS: Record<InvestmentCategory, string> = {
   environment: "hsl(174, 72%, 56%)", // Teal
 };
 
+/**
+ * Demo account email - this account has restricted access to prevent
+ * password changes and maintain public accessibility.
+ */
+export const DEMO_ACCOUNT_EMAIL = "test@example.com";
+
