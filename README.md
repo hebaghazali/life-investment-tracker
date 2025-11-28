@@ -7,7 +7,7 @@ A personal journaling app to track how you invest in different areas of your lif
 - **Framework**: Next.js 14+ (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: SQLite (development) / PostgreSQL (production-ready)
+- **Database**: PostgreSQL (via managed providers like Neon, Supabase, or Railway)
 - **ORM**: Prisma
 
 ## Features
@@ -43,13 +43,48 @@ Each entry can include:
    pnpm install
    ```
 
-3. Set up the environment:
+3. **Database Setup** (PostgreSQL):
+   
+   The app uses **PostgreSQL** as the primary database. **Note**: Earlier versions used SQLite for local development; that data is not automatically migrated. This is a personal project, so you can simply re-enter data as needed.
+   
+   **Option A: Using a Managed Provider (Recommended)**
+   
+   Create a free PostgreSQL database using one of these providers:
+   - **[Neon](https://neon.tech)** - Serverless Postgres with generous free tier
+   - **[Supabase](https://supabase.com)** - Open-source Firebase alternative
+   - **[Railway](https://railway.app)** - Simple deployment platform
+   
+   After creating your database:
+   
+   a. Copy the connection string provided by your provider
+   
+   b. Create a `.env` file in the project root:
    ```bash
-   # Create .env file with database URL
-   echo 'DATABASE_URL="file:./dev.db"' > .env
+   cp .env.example .env
+   ```
+   
+   c. Update the `DATABASE_URL` in your `.env` file:
+   ```env
+   DATABASE_URL="postgresql://username:password@host:port/database?sslmode=require"
+   ```
+   
+   **Option B: Local PostgreSQL**
+   
+   If you have PostgreSQL installed locally:
+   ```bash
+   # Create a local database
+   createdb life_investment_tracker
+   
+   # Add to .env
+   echo 'DATABASE_URL="postgresql://postgres:password@localhost:5432/life_investment_tracker"' > .env
    ```
 
-4. Initialize the database:
+4. Run database migrations:
+   ```bash
+   pnpm db:migrate
+   ```
+   
+   Or if you prefer to push schema without migrations:
    ```bash
    pnpm db:push
    ```
@@ -121,32 +156,30 @@ Each entry can include:
 | `pnpm start` | Start production server |
 | `pnpm lint` | Run ESLint |
 | `pnpm db:generate` | Generate Prisma client |
-| `pnpm db:push` | Push schema to database |
-| `pnpm db:studio` | Open Prisma Studio |
+| `pnpm db:migrate` | Run database migrations (creates migration files) |
+| `pnpm db:push` | Push schema to database (without migrations) |
+| `pnpm db:studio` | Open Prisma Studio to explore data |
 | `pnpm db:seed` | Seed database with sample data |
 
 ## Production Deployment
 
-For production, update `DATABASE_URL` in your environment to point to a PostgreSQL database:
+The app is already configured for PostgreSQL. For production deployment (e.g., Vercel, Railway):
 
-```env
-DATABASE_URL="postgresql://user:password@host:5432/database"
-```
+1. Set the `DATABASE_URL` environment variable in your deployment platform to your production PostgreSQL connection string.
 
-Then update `prisma/schema.prisma`:
+2. The deployment platform will automatically run `postinstall` script (`prisma generate`).
 
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
+3. Run migrations on first deploy:
+   ```bash
+   pnpm db:migrate
+   ```
+   
+   Or use `db:push` for quick deployments:
+   ```bash
+   pnpm db:push
+   ```
 
-And run:
-```bash
-pnpm db:generate
-pnpm db:push
-```
+**Note**: For Vercel deployments with Prisma, migrations are typically run locally and committed to git, then applied automatically during deployment. See [Prisma's deployment docs](https://www.prisma.io/docs/guides/deployment/deployment-guides/deploying-to-vercel) for best practices.
 
 ## License
 

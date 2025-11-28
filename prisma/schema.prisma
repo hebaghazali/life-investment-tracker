@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -17,7 +17,7 @@ model DayEntry {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   investments      Investment[]
-  tags             String       @default("[]") // JSON array stored as string for SQLite
+  tags             String       @default("[]") // JSON array stored as string
 }
 
 model Investment {
