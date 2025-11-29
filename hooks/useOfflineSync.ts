@@ -18,13 +18,6 @@ import {
  * - Provides manual sync capability
  */
 export function useOfflineSync() {
-  // Only run on client side - skip during SSR
-  const [isMounted, setIsMounted] = useState(false);
-  
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const user = useUser({ or: "return-null" });
   const [isOnline, setIsOnline] = useState(
     typeof window !== "undefined" ? navigator.onLine : true
@@ -96,8 +89,7 @@ export function useOfflineSync() {
    * Listen for online/offline events
    */
   useEffect(() => {
-    // Only run on client side after mount
-    if (typeof window === "undefined" || !isMounted) return;
+    if (typeof window === "undefined") return;
 
     const handleOnline = () => {
       console.log("[OfflineSync] Network online - checking for pending entries");
@@ -127,7 +119,7 @@ export function useOfflineSync() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [user?.id, syncOfflineEntries, isMounted]);
+  }, [user?.id, syncOfflineEntries]);
 
   return {
     isOnline,
