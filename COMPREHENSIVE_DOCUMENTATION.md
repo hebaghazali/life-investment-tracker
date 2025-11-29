@@ -1739,48 +1739,18 @@ The hook:
 - Returns boolean `isOnline` state
 - Can be used to show offline indicators or disable features
 
-### Offline Data Sync (Phase 2)
-
-The app now supports **offline editing** for day entries on `/today` and `/day/[date]` pages:
-
-✅ **Offline Queue**:
-- Day entries saved while offline are stored in localStorage
-- Entries automatically sync when connection is restored
-- "Pending sync" indicator shows which entries haven't synced yet
-- Last-write-wins conflict resolution (no merge conflicts)
-
-**How It Works**:
-
-1. **When Offline**: If you save an entry and the network is unavailable, the app stores it locally and shows a toast: "Saved locally. Will sync when you are back online."
-
-2. **Visual Indicator**: A small badge appears next to the date showing "Pending sync" with a wifi-off icon.
-
-3. **Automatic Sync**: When your connection returns, the app automatically detects it and syncs all pending entries to the server.
-
-4. **Sync Confirmation**: After successful sync, a toast shows: "Synced X offline entry/entries"
-
-**Technical Implementation**:
-- **Storage**: localStorage with namespace `lit_offline_entries_v1`
-- **Structure**: Entries keyed by `userId` and `date` for multi-user support
-- **Hook**: `useOfflineSync()` monitors online/offline events
-- **Provider**: `<OfflineSyncProvider />` in root layout enables app-wide sync
-
-**Conflict Resolution**:
-- Simple "last write wins" strategy
-- Latest saved version (offline or online) is the source of truth
-- No complex merge logic needed for this use case
-
 ### Current Limitations
 
-⚠️ **Read Operations Still Require Internet**:
-- Viewing entries/calendar/insights requires network connection
-- Only write operations (saving entries) work offline
-- Future enhancement: IndexedDB for full offline read capability
+The PWA implementation is currently **Phase 1** focused on installability and fast loading:
 
-⚠️ **No Background Sync API**:
-- Sync happens when app is open and online
-- No periodic background sync for updates
-- Future enhancement: Background Sync API integration
+⚠️ **No Offline Mutations**: 
+- Creating/editing entries while offline will fail
+- Server actions require network connection
+- Future enhancement: offline queue with sync on reconnect
+
+⚠️ **No Background Sync**:
+- No background data fetching
+- Future enhancement: periodic background sync for updates
 
 ⚠️ **Limited Push Notifications**:
 - No push notification support yet
@@ -1818,38 +1788,6 @@ The service worker is **disabled in development** to avoid caching issues. To te
 1. Open DevTools → Application → Service Workers
 2. Verify registration status
 3. Test "Update on reload" and "Bypass for network"
-
-**Test Offline Data Sync**:
-1. Navigate to `/today` or any `/day/[date]` page
-2. Open DevTools → Network
-3. Enable "Offline" throttling
-4. Fill out the form and click Save
-5. Verify toast: "Saved locally. Will sync when you are back online."
-6. Verify "Pending sync" badge appears
-7. Reload the page (form should still show offline data)
-8. Disable "Offline" throttling (go back online)
-9. Verify toast: "Synced 1 offline entry"
-10. Verify badge disappears
-11. Check database - entry should be persisted
-
-**Check localStorage Queue**:
-1. Open DevTools → Application → Local Storage
-2. Find key: `lit_offline_entries_v1`
-3. View pending entries structure:
-   ```json
-   {
-     "userId123": {
-       "2024-11-29": {
-         "date": "2024-11-29",
-         "mood": 4,
-         "energy": 3,
-         "investments": [...],
-         "tags": [...],
-         "lastUpdatedAt": "2024-11-29T12:00:00.000Z"
-       }
-     }
-   }
-   ```
 
 **Test Offline Mode**:
 1. Open DevTools → Network

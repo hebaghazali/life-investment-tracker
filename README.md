@@ -49,16 +49,13 @@ The app is installable as a Progressive Web App, providing an app-like experienc
 
 ✨ **PWA Features**:
 - **Offline Access**: Core app UI loads even without internet
-- **Offline Data Sync**: Save day entries while offline, auto-sync when back online
 - **Fast Loading**: Static assets cached for instant access
 - **App-like Feel**: Runs in standalone mode without browser UI
 - **Home Screen Icon**: Launch directly from your device's home screen
 
-📝 **Offline Editing**:
-- Save entries on `/today` and `/day/[date]` pages while offline
-- Entries stored locally and synced automatically when connection returns
-- "Pending sync" indicator shows which entries haven't synced yet
-- Simple "last write wins" conflict resolution
+⚠️ **Current Limitations**:
+- Creating or editing entries requires an internet connection
+- Offline data sync coming in a future update
 
 For technical details, see the [PWA Support section in COMPREHENSIVE_DOCUMENTATION.md](./COMPREHENSIVE_DOCUMENTATION.md#pwa-support).
 
