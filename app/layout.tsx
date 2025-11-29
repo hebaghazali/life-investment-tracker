@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Toaster } from "sonner";
 import { Header } from "@/components/layout/Header";
 import { StackProvider, StackTheme } from "@stackframe/stack";
@@ -7,8 +8,14 @@ import { stackServerApp } from "@/lib/stack";
 import { AuthLoadingProvider } from "@/contexts/AuthLoadingContext";
 import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
-import { OfflineSyncProvider } from "@/components/OfflineSyncProvider";
 import "./globals.css";
+
+// Dynamically import OfflineSyncProvider to prevent SSR issues
+// It only needs to run on the client side
+const OfflineSyncProvider = dynamic(
+  () => import("@/components/OfflineSyncProvider").then((mod) => ({ default: mod.OfflineSyncProvider })),
+  { ssr: false }
+);
 
 export const metadata: Metadata = {
   title: "Life Investment Tracker",
