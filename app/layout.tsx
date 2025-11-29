@@ -6,12 +6,32 @@ import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackServerApp } from "@/lib/stack";
 import { AuthLoadingProvider } from "@/contexts/AuthLoadingContext";
 import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Life Investment Journal",
+  title: "Life Investment Tracker",
   description:
     "Track how you invest in your life each day - career, health, relationships, wellbeing, and more",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LifeInvest",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+};
+
+export const viewport = {
+  themeColor: "#0891b2",
 };
 
 export default function RootLayout({
@@ -25,6 +45,7 @@ export default function RootLayout({
         <StackProvider app={stackServerApp}>
           <StackTheme>
             <AuthLoadingProvider>
+              <ServiceWorkerRegister />
               <AuthLoadingOverlay />
               <div className="min-h-screen bg-background">
                 <Suspense fallback={

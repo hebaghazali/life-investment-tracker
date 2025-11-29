@@ -36,6 +36,29 @@ The app uses **Neon Auth** (powered by Stack Auth) for user management. Features
 
 See [NEON_AUTH_SETUP.md](./NEON_AUTH_SETUP.md) for setup instructions.
 
+### Progressive Web App (PWA)
+
+The app is installable as a Progressive Web App, providing an app-like experience on mobile and desktop:
+
+📱 **Install on Mobile**:
+- **Android (Chrome)**: Tap the menu (⋮) → "Add to Home screen" → Confirm
+- **iOS (Safari)**: Tap the Share button → "Add to Home Screen" → Confirm
+
+💻 **Install on Desktop**:
+- **Chrome/Edge**: Click the install icon in the address bar → "Install"
+
+✨ **PWA Features**:
+- **Offline Access**: Core app UI loads even without internet
+- **Fast Loading**: Static assets cached for instant access
+- **App-like Feel**: Runs in standalone mode without browser UI
+- **Home Screen Icon**: Launch directly from your device's home screen
+
+⚠️ **Current Limitations**:
+- Creating or editing entries requires an internet connection
+- Offline data sync coming in a future update
+
+For technical details, see the [PWA Support section in COMPREHENSIVE_DOCUMENTATION.md](./COMPREHENSIVE_DOCUMENTATION.md#pwa-support).
+
 ## Getting Started
 
 ### Prerequisites

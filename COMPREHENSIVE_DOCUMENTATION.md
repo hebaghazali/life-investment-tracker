@@ -19,7 +19,8 @@
 9. [API Reference (Server Actions)](#api-reference-server-actions)
 10. [Component Architecture](#component-architecture)
 11. [Deployment & Configuration](#deployment--configuration)
-12. [Development Guidelines](#development-guidelines)
+12. [PWA Support](#pwa-support)
+13. [Development Guidelines](#development-guidelines)
 
 ---
 
@@ -1502,6 +1503,337 @@ pnpm db:push
   "postinstall": "prisma generate"      // Auto-run after npm install
 }
 ```
+
+---
+
+## PWA Support
+
+### Overview
+
+The Life Investment Tracker is a **Progressive Web App (PWA)**, which means it can be installed on mobile devices and desktops, providing an app-like experience with fast loading and basic offline capabilities.
+
+### Key PWA Features
+
+✅ **Installable**: Add to home screen on iOS and Android  
+✅ **Offline Shell**: Core app UI cached for fast loads  
+✅ **App-like Experience**: Runs in standalone mode without browser chrome  
+✅ **Fast Loading**: Static assets cached for instant access  
+⚠️ **Limited Offline Editing**: Data mutations require network connection (future enhancement)
+
+### Web App Manifest
+
+**Location**: `public/manifest.webmanifest`
+
+The manifest defines how the app appears when installed:
+
+```json
+{
+  "name": "Life Investment Tracker",
+  "short_name": "LifeInvest",
+  "description": "Track how you invest in your life each day",
+  "start_url": "/today",
+  "display": "standalone",
+  "background_color": "#f0f6f9",
+  "theme_color": "#0891b2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["productivity", "lifestyle", "health"],
+  "icons": [
+    { "src": "/icons/icon-192x192.png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icons/icon-512x512.png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icons/icon-maskable-192x192.png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "/icons/icon-maskable-512x512.png", "sizes": "512x512", "purpose": "maskable" }
+  ]
+}
+```
+
+**Key Properties**:
+- `start_url`: Opens to `/today` when launched from home screen
+- `display: standalone`: Hides browser UI for app-like feel
+- `theme_color`: Matches primary color (`#0891b2`)
+- `background_color`: Matches app background (`#f0f6f9`)
+- `icons`: Multiple sizes and maskable variants for Android adaptive icons
+
+### Service Worker
+
+**Location**: `public/sw.js`
+
+The service worker implements intelligent caching strategies to enable offline functionality and fast loading.
+
+#### Caching Strategies
+
+The service worker uses three different caching strategies based on resource type:
+
+**1. Cache-First (Static Assets)**
+
+Used for: JavaScript, CSS, fonts, images, icons
+
+```
+Request → Check Cache → Return Cached → (Background: Fetch & Update Cache)
+                ↓ (if miss)
+          Fetch Network → Cache → Return
+```
+
+**Files Cached**:
+- All static assets (`.js`, `.css`, `.woff2`, `.png`, `.jpg`, etc.)
+- PWA icons and manifest
+- App logo
+
+**2. Network-First with Cache Fallback (HTML/Routes)**
+
+Used for: Page navigation, HTML documents, dynamic routes
+
+```
+Request → Fetch Network → Cache → Return
+              ↓ (if fails)
+          Check Cache → Return
+              ↓ (if miss)
+          Show Offline Page
+```
+
+**Routes Cached**:
+- `/` (home)
+- `/today`
+- `/calendar`
+- `/insights`
+- `/day/[date]` patterns
+
+**3. Stale-While-Revalidate (API/Data)**
+
+Used for: API routes and data fetching
+
+```
+Request → Return Cache (if available) + Background Fetch → Update Cache
+              ↓ (if no cache)
+          Wait for Network → Cache → Return
+```
+
+#### Cache Versioning
+
+The service worker uses a versioned cache name to enable cache invalidation on deployments:
+
+```javascript
+const CACHE_VERSION = 'v1.0.0';
+const CACHE_NAME = `life-investment-tracker-${CACHE_VERSION}`;
+```
+
+When a new version is deployed:
+1. New service worker installs with new `CACHE_VERSION`
+2. On activation, old caches are automatically deleted
+3. Users get fresh assets on next page load
+
+#### Authentication & Special Routes
+
+The service worker **skips caching** for:
+- `/api/auth/*` (Stack Auth endpoints)
+- `/handler/*` (Stack Auth handlers)
+- Non-GET requests (POST, PUT, DELETE)
+- Non-HTTP(S) requests
+
+This ensures authentication flows work correctly and mutations always hit the server.
+
+#### Offline Page
+
+If a user navigates to an uncached page while offline, they see a custom offline page with:
+- Branded styling matching the app theme
+- Clear "You're Offline" message
+- Retry button to refresh when connection returns
+
+### Service Worker Registration
+
+**Component**: `components/ServiceWorkerRegister.tsx`
+
+A client-only component that registers the service worker on app load:
+
+```tsx
+"use client";
+
+export function ServiceWorkerRegister() {
+  useEffect(() => {
+    if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" })
+        .then((registration) => {
+          console.log("[PWA] Service Worker registered");
+          registration.update(); // Check for updates
+        });
+    }
+  }, []);
+  return null;
+}
+```
+
+**Key Points**:
+- Only registers in **production** (disabled in development)
+- Automatically checks for updates on page load
+- Listens for service worker updates and controller changes
+- Integrated into `app/layout.tsx` for global registration
+
+### PWA Meta Tags
+
+**Location**: `app/layout.tsx`
+
+The root layout includes necessary PWA meta tags:
+
+```tsx
+export const metadata: Metadata = {
+  title: "Life Investment Tracker",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LifeInvest",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
+    ],
+  },
+};
+
+export const viewport = {
+  themeColor: "#0891b2",
+};
+```
+
+These tags enable:
+- iOS "Add to Home Screen" with proper icon and title
+- Android theme color in status bar
+- Proper manifest linking
+
+### PWA Icons
+
+**Location**: `public/icons/`
+
+PWA requires multiple icon sizes and formats:
+
+| File | Size | Purpose |
+|------|------|---------|
+| `icon-192x192.png` | 192×192 | Standard app icon (Android, Chrome) |
+| `icon-512x512.png` | 512×512 | High-res app icon |
+| `icon-maskable-192x192.png` | 192×192 | Adaptive icon (Android safe zone) |
+| `icon-maskable-512x512.png` | 512×512 | High-res adaptive icon |
+| `apple-touch-icon.png` | 180×180 | iOS home screen icon |
+
+**Regenerating Icons**: Run `node scripts/generate-icons.js` to regenerate all icons from `public/logo.png`.
+
+### Offline Detection Hook
+
+**Location**: `hooks/useOnlineStatus.ts`
+
+A custom hook to detect online/offline status:
+
+```tsx
+const isOnline = useOnlineStatus();
+
+if (!isOnline) {
+  toast.warning("You are offline. Changes will not be saved.");
+}
+```
+
+The hook:
+- Listens to browser `online` and `offline` events
+- Returns boolean `isOnline` state
+- Can be used to show offline indicators or disable features
+
+### Current Limitations
+
+The PWA implementation is currently **Phase 1** focused on installability and fast loading:
+
+⚠️ **No Offline Mutations**: 
+- Creating/editing entries while offline will fail
+- Server actions require network connection
+- Future enhancement: offline queue with sync on reconnect
+
+⚠️ **No Background Sync**:
+- No background data fetching
+- Future enhancement: periodic background sync for updates
+
+⚠️ **Limited Push Notifications**:
+- No push notification support yet
+- Future enhancement: daily reminder notifications
+
+### Testing PWA Locally
+
+#### Development Mode
+
+The service worker is **disabled in development** to avoid caching issues. To test PWA features locally:
+
+1. **Build for production**:
+   ```bash
+   npx pnpm build
+   ```
+
+2. **Run production build**:
+   ```bash
+   npx pnpm start
+   ```
+
+3. **Open in browser**:
+   ```
+   http://localhost:3000
+   ```
+
+#### Chrome DevTools
+
+**Validate Manifest**:
+1. Open DevTools → Application → Manifest
+2. Check all fields are correct
+3. Verify icons load properly
+
+**Check Service Worker**:
+1. Open DevTools → Application → Service Workers
+2. Verify registration status
+3. Test "Update on reload" and "Bypass for network"
+
+**Test Offline Mode**:
+1. Open DevTools → Network
+2. Enable "Offline" throttling
+3. Navigate to different pages
+4. Verify cached pages load correctly
+
+**Lighthouse Audit**:
+1. Open DevTools → Lighthouse
+2. Select "Progressive Web App"
+3. Run audit
+4. Should score 90+ for PWA criteria
+
+#### Mobile Testing
+
+**Android (Chrome)**:
+1. Open site in Chrome
+2. Tap menu → "Add to Home screen"
+3. Confirm installation
+4. Launch from home screen
+5. Should open in standalone mode
+
+**iOS (Safari)**:
+1. Open site in Safari
+2. Tap share button
+3. Select "Add to Home Screen"
+4. Confirm
+5. Launch from home screen
+6. Note: iOS has limited PWA support (no background sync, etc.)
+
+### Deployment Considerations
+
+**Vercel Deployment**:
+- Service worker is served statically from `public/sw.js`
+- No special configuration needed
+- Cache headers handled automatically
+
+**Cache Invalidation**:
+- Increment `CACHE_VERSION` in `public/sw.js` before deploying
+- Old caches are automatically cleared on next visit
+- Users may need to refresh twice to see updates
+
+**HTTPS Requirement**:
+- Service workers require HTTPS in production
+- Vercel provides HTTPS by default
+- Localhost works without HTTPS in development
 
 ---
 
