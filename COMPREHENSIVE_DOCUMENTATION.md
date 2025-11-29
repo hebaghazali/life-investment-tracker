@@ -1,8 +1,8 @@
 # Life Investment Tracker - Comprehensive Technical Documentation
 
-> **Last Updated**: November 28, 2025  
-> **Version**: 1.0.0  
-> **Status**: ✅ Core Features Complete | 🔄 Auth Integration Ready
+> **Last Updated**: November 29, 2025  
+> **Version**: 1.5.0  
+> **Status**: ✅ Production Ready | ✅ Full Feature Set Complete
 
 ---
 
@@ -49,7 +49,9 @@ Each category is scored 0-3 daily, creating a quantitative record of life priori
 ✅ **Tag System**: Categorize days (deep-work, social, rest, etc.)  
 ✅ **MVD Tracking**: Mark "Minimum Viable Days"  
 ✅ **Historical View**: Browse and edit past entries  
-🔜 **Insights Dashboard**: Analytics and trends (planned)
+✅ **Insights Dashboard**: Comprehensive analytics with correlations and narrative summaries  
+✅ **Demo Account Protection**: Middleware-based demo account restrictions  
+✅ **Route Protection**: Next.js middleware for authentication
 
 ---
 
@@ -140,6 +142,7 @@ Each category is scored 0-3 daily, creating a quantitative record of life priori
 | **Lucide React** | 0.555.0 | Icon library |
 | **date-fns** | 4.1.0 | Date manipulation |
 | **Sonner** | 2.0.7 | Toast notifications |
+| **Recharts** | 2.15.4 | Chart library for insights |
 
 ### Backend
 
@@ -407,22 +410,26 @@ await prisma.dayEntry.findMany({
 });
 ```
 
-#### Route Protection
+#### Route Protection & Middleware
 
-Currently, routes are **not** automatically protected by middleware. Authentication is enforced at the **data layer** (server actions throw errors if not authenticated).
+The application uses **Next.js middleware** for:
+1. **Demo Account Protection**: Prevents demo account from modifying account settings
+2. **Future Auth Guards**: Framework ready for automatic route protection
 
-**Future Enhancement:**
-Consider adding Next.js middleware for automatic route protection:
+**Implementation:** `middleware.ts`
 
-```typescript
-// middleware.ts (not implemented yet)
-export async function middleware(request: NextRequest) {
-  const user = await stackServerApp.getUser();
-  if (!user && isProtectedRoute(request.nextUrl.pathname)) {
-    return NextResponse.redirect('/handler/sign-in');
-  }
-}
-```
+The middleware intercepts Stack Auth handler routes and blocks account-level operations for the demo account while allowing regular users full access.
+
+**Protected Operations for Demo Account:**
+- Account settings modifications
+- Email verification changes
+- Password reset/change
+- Account deletion
+
+**Demo Account:**
+- Email: `test@example.com`
+- Allows: Normal app usage (entries, calendar, insights)
+- Blocks: Account mutations via middleware redirect
 
 ### Environment Variables
 
@@ -434,6 +441,29 @@ STACK_SECRET_SERVER_KEY="skey_..."
 
 # Database
 DATABASE_URL="postgresql://..."
+
+# Demo Account (defined in lib/constants.ts)
+# DEMO_ACCOUNT_EMAIL="test@example.com"
+```
+
+### Demo Account System
+
+The application includes a demo account feature that allows public testing while protecting account integrity.
+
+**Key Files:**
+- `lib/constants.ts`: Defines `DEMO_ACCOUNT_EMAIL`
+- `lib/demoGuard.ts`: Helper functions (`isDemoEmail`, `isDemoUser`)
+- `middleware.ts`: Enforces demo account restrictions
+
+**How It Works:**
+```typescript
+// Check if user is demo account
+const isDemoAccount = user.primaryEmail?.toLowerCase() === DEMO_ACCOUNT_EMAIL.toLowerCase();
+
+// Block account mutations for demo
+if (isDemoAccount && isBlockedPath) {
+  return NextResponse.redirect('/today');
+}
 ```
 
 ---
@@ -446,7 +476,8 @@ DATABASE_URL="postgresql://..."
 life-investment-tracker/
 ├── app/                          # Next.js App Router
 │   ├── actions/                  # Server Actions (API layer)
-│   │   └── dayEntry.ts           # CRUD operations for entries
+│   │   ├── dayEntry.ts           # CRUD operations for entries
+│   │   └── insights.ts           # Insights data aggregation
 │   ├── api/
 │   │   └── auth/
 │   │       └── [...nextauth]/    # Legacy (unused)
@@ -462,10 +493,12 @@ life-investment-tracker/
 │   │       └── page.tsx          # Server component
 │   ├── handler/
 │   │   └── [...stack]/           # Stack Auth handler routes
+│   │       ├── AuthPageWrapper.tsx # Auth page wrapper component
 │   │       ├── loading.tsx       # Loading state
 │   │       └── page.tsx          # Auth pages (sign-in, sign-up)
-│   ├── insights/                 # Future analytics page
-│   │   └── page.tsx
+│   ├── insights/                 # Analytics and insights page
+│   │   ├── InsightsPageClient.tsx # Client component (charts, filters)
+│   │   └── page.tsx              # Server component (data loading)
 │   ├── today/                    # Today's entry route
 │   │   ├── page.tsx              # Server component
 │   │   └── TodayForm.tsx         # Client form component
@@ -475,6 +508,7 @@ life-investment-tracker/
 │   └── page.tsx                  # Home page (redirects to /today)
 │
 ├── components/                   # React components
+│   ├── AuthLoadingOverlay.tsx    # Loading overlay for auth operations
 │   ├── calendar/                 # Calendar-specific components
 │   │   ├── DayCell.tsx           # Single day in calendar grid
 │   │   ├── DayDetailModal.tsx    # Edit modal
@@ -486,6 +520,14 @@ life-investment-tracker/
 │   │   ├── DayMVDIndicator.tsx   # MVD badge
 │   │   ├── DayReflection.tsx     # Note display
 │   │   └── DayTags.tsx           # Tag display
+│   ├── insights/                 # Insights page components
+│   │   ├── CategoryBalanceChart.tsx       # Category investment chart
+│   │   ├── InsightsConsistencySection.tsx # Streaks and consistency
+│   │   ├── InsightsCorrelationsSection.tsx # Pattern correlations
+│   │   ├── InsightsMvdSection.tsx         # MVD analytics
+│   │   ├── InsightsNarrativeSummary.tsx   # AI-like narrative summary
+│   │   ├── InsightsTagsSection.tsx        # Tag usage analytics
+│   │   └── MoodEnergyChart.tsx            # Mood/energy trends
 │   ├── layout/                   # Layout components
 │   │   └── Header.tsx            # Global header (nav + auth)
 │   ├── today/                    # Today page form components
@@ -498,18 +540,26 @@ life-investment-tracker/
 │       ├── badge.tsx
 │       ├── button.tsx
 │       ├── card.tsx
+│       ├── chart.tsx             # Recharts wrapper components
 │       ├── dialog.tsx
 │       ├── label.tsx
 │       ├── sheet.tsx
 │       ├── switch.tsx
 │       └── textarea.tsx
 │
+├── contexts/                     # React contexts
+│   └── AuthLoadingContext.tsx    # Auth loading state management
+│
 ├── hooks/                        # Custom React hooks
 │   └── useDeleteDay.ts           # Hook for deleting entries
 │
 ├── lib/                          # Utilities and shared logic
 │   ├── auth.ts                   # Authentication helpers
+│   ├── constants.ts              # App constants (category colors, demo email)
 │   ├── dateUtils.ts              # Date normalization
+│   ├── demoGuard.ts              # Demo account helper functions
+│   ├── insights.ts               # Insights calculation utilities
+│   ├── insightsSummary.ts        # Narrative summary generators
 │   ├── prisma.ts                 # Prisma client singleton
 │   ├── stack.ts                  # Stack Auth configuration
 │   ├── types.ts                  # TypeScript types
@@ -528,17 +578,22 @@ life-investment-tracker/
 │   ├── logo.png
 │   └── robots.txt
 │
-├── AUTH_ARCHITECTURE.md          # Auth system documentation
-├── IMPLEMENTATION_SUMMARY.md     # Implementation notes
-├── NEON_AUTH_SETUP.md            # Auth setup guide
-├── QUICK_START.md                # Quick start guide
-├── README.md                     # Main readme
-├── next.config.js                # Next.js configuration
-├── package.json                  # Dependencies
-├── postcss.config.mjs            # PostCSS configuration
-├── tailwind.config.ts            # Tailwind configuration
-├── tsconfig.json                 # TypeScript configuration
-└── pnpm-lock.yaml                # Lockfile
+├── AUTH_ARCHITECTURE.md                # Auth system documentation
+├── COMPREHENSIVE_DOCUMENTATION.md      # This file
+├── IMPLEMENTATION_SUMMARY.md           # Implementation notes
+├── INSIGHTS_V1_IMPLEMENTATION_SUMMARY.md   # Insights v1 implementation
+├── INSIGHTS_V1.5_IMPLEMENTATION_SUMMARY.md # Insights v1.5 upgrade
+├── NEON_AUTH_SETUP.md                  # Auth setup guide
+├── QUICK_START.md                      # Quick start guide
+├── README.md                           # Main readme
+├── components.json                     # shadcn/ui configuration
+├── middleware.ts                       # Next.js middleware (demo guard)
+├── next.config.js                      # Next.js configuration
+├── package.json                        # Dependencies
+├── postcss.config.mjs                  # PostCSS configuration
+├── tailwind.config.ts                  # Tailwind configuration
+├── tsconfig.json                       # TypeScript configuration
+└── pnpm-lock.yaml                      # Lockfile
 ```
 
 ### Key Patterns
@@ -719,15 +774,93 @@ Total Score | Color Class
 
 ### 4. Insights Page (`/insights`)
 
-**Status:** 🔜 Not yet implemented
+**Status:** ✅ Fully Implemented (v1.5)
 
-**Planned Features:**
-- Total investment score trends
-- Category distribution charts
-- Mood/energy correlations
-- MVD frequency
-- Streak tracking
-- Tag analytics
+**Purpose:** Comprehensive analytics dashboard with visual trends, correlations, and narrative summaries.
+
+**Components:**
+- `InsightsPageClient`: Main container with sticky filters
+- `CategoryBalanceChart`: Radar chart of investment distribution
+- `MoodEnergyChart`: Line chart showing mood/energy trends over time
+- `InsightsNarrativeSummary`: Rule-based narrative insights (3-5 sentences)
+- `InsightsConsistencySection`: Streak tracking and consistency metrics
+- `InsightsMvdSection`: MVD frequency and patterns
+- `InsightsTagsSection`: Tag usage analytics
+- `InsightsCorrelationsSection`: Category-mood, tag-mood/energy, and MVD correlations
+
+**Features:**
+
+**1. Time Range Filters (Sticky Bar):**
+- Last 7 days
+- Last 30 days
+- Last 90 days
+- All time
+- Sticky positioning with backdrop blur
+
+**2. Summary Cards (6 metrics):**
+- Total logged days
+- Average total investment score
+- Average mood (1-5 scale)
+- Average energy (1-5 scale)
+- MVD count
+- Unique tags used
+
+**3. Narrative Summary:**
+- Rule-based text generation (no AI)
+- 3-5 contextual sentences
+- Analyzes mood, energy, category focus, MVD patterns, tag usage
+- Unlocks at 3+ logged days
+- Thresholds: High (≥4), Balanced (2.5-4), Low (≤2.5)
+
+**4. Visual Charts:**
+- **Mood & Energy Trends**: Line chart with date on X-axis
+- **Category Balance**: Radar chart showing investment distribution
+- Recharts-powered with tooltips and animations
+
+**5. Collapsible Sections:**
+- **Streaks & Consistency**: Longest streak, current streak, 7-day consistency
+- **MVD Insights**: MVD frequency, percentage, patterns
+- **Tags Overview**: Top 3 tags + full list with counts
+- **Correlations**: 
+  - Category ↔ Mood patterns
+  - Tag ↔ Mood & Energy patterns
+  - MVD vs Non-MVD comparisons
+
+**6. Correlation Analysis:**
+- Compares above-average vs below-average investment impact on mood
+- Shows mood/energy averages per tag
+- Compares MVD vs regular days
+- Requires 5+ logged days, 2+ days per group
+- Color-coded deltas (green for positive, amber for negative)
+
+**User Flow:**
+```
+1. User visits /insights
+   ↓
+2. Server fetches last 30 days of data via getInsightsData()
+   ↓
+3. Client renders summary cards and narrative
+   ↓
+4. User changes time range filter
+   ↓
+5. Client filters data (useMemo) and re-renders
+   ↓
+6. User expands/collapses sections as needed
+   ↓
+7. Charts update with smooth animations
+```
+
+**Server Actions:**
+- `getInsightsData(from, to)`: Fetches entries and builds insights
+
+**Utilities:**
+- `lib/insights.ts`: Calculation functions (streaks, correlations, aggregates)
+- `lib/insightsSummary.ts`: Narrative summary generators
+
+**Empty States:**
+- No data: Link to Today/Calendar pages
+- Insufficient data for correlations: "Log a few more days"
+- Insufficient data for summaries: "Log at least 3 days to unlock"
 
 ---
 
@@ -857,11 +990,35 @@ Total Score | Color Class
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### Constants & Category Colors
+
+**File:** `lib/constants.ts`
+
+The application defines consistent category colors and demo account settings:
+
+```typescript
+export const CATEGORY_COLORS: Record<InvestmentCategory, string> = {
+  career: "hsl(200, 98%, 39%)",      // Blue
+  health: "hsl(142, 71%, 45%)",      // Green
+  relationships: "hsl(280, 65%, 60%)", // Purple
+  wellbeing: "hsl(45, 93%, 47%)",    // Yellow/Gold
+  meaning: "hsl(16, 90%, 55%)",      // Orange
+  environment: "hsl(174, 72%, 56%)"  // Teal
+};
+
+export const DEMO_ACCOUNT_EMAIL = "test@example.com";
+```
+
+**Usage:**
+- Charts consistently use `CATEGORY_COLORS` for visual representation
+- Insights components reference these colors for category-specific styling
+- Demo guard functions check against `DEMO_ACCOUNT_EMAIL`
+
 ### Investment Category Hybrid Model
 
 **Problem:** How to balance type safety with database flexibility?
 
-**Solution:** Hybrid approach with string enum + relational table.
+**Solution:** Hybrid approach with string enum + relational table + consistent colors.
 
 ```typescript
 // TypeScript (Client/Server Shared)
@@ -1014,6 +1171,68 @@ Fetches all entries for the authenticated user.
 
 ---
 
+### `getInsightsData(range: { from: Date; to: Date })`
+
+**File:** `app/actions/insights.ts`
+
+Fetches and aggregates insights data for the authenticated user within a date range.
+
+**Authentication:** Required (`requireUser()`)
+
+**Parameters:**
+- `range.from`: Start date (inclusive)
+- `range.to`: End date (inclusive)
+
+**Returns:** `InsightsData`
+
+**Return Type:**
+```typescript
+interface InsightsData {
+  days: DaySummary[];
+  aggregates: {
+    totalDays: number;
+    avgTotalScore: number;
+    avgMood: number | null;
+    avgEnergy: number | null;
+    mvdCount: number;
+    uniqueTags: string[];
+  };
+}
+
+interface DaySummary {
+  date: string;
+  totalScore: number;
+  mood: number | null;
+  energy: number | null;
+  isMinimumViableDay: boolean;
+  tags: string[];
+  investments: { category: InvestmentCategory; score: number }[];
+}
+```
+
+**Behavior:**
+- Fetches day entries with eager-loaded investments
+- Transforms to `DayEntry` type
+- Calls `buildInsightsFromEntries()` to calculate aggregates
+- Used by Insights page for all analytics
+
+**Calculation Utilities:**
+- `lib/insights.ts`: Core calculation functions
+  - `buildInsightsFromEntries()`: Main aggregation function
+  - `computeStreaks()`: Calculates longest and current streaks
+  - `computeCategoryMoodCorrelations()`: Category-mood patterns
+  - `computeTagMoodEnergyCorrelations()`: Tag-mood/energy patterns
+  - `computeMvdCorrelations()`: MVD vs non-MVD comparisons
+- `lib/insightsSummary.ts`: Narrative summary generators
+  - `generateNarrativeSummary()`: Main summary generator
+  - `generateMoodSummary()`: Mood pattern analysis
+  - `generateEnergySummary()`: Energy pattern analysis
+  - `generateCategorySummary()`: Investment focus patterns
+  - `generateMvdSummary()`: MVD usage patterns
+  - `generateTagSummary()`: Tag frequency analysis
+
+---
+
 ### `clearDayEntry(date: string)`
 
 Deletes a day entry for the authenticated user.
@@ -1037,12 +1256,15 @@ Deletes a day entry for the authenticated user.
 
 ```
 app/layout.tsx (Root)
-  ├─ StackProvider
-  │   ├─ StackTheme
-  │   │   └─ children
-  └─ Header
-      ├─ Navigation Links
-      └─ UserButton / Sign In Link
+  ├─ AuthLoadingProvider
+  │   ├─ StackProvider
+  │   │   ├─ StackTheme
+  │   │   │   └─ children
+  │   ├─ Header
+  │   │   ├─ Navigation Links
+  │   │   └─ UserButton / Sign In Link
+  │   └─ AuthLoadingOverlay (conditional)
+  └─ Toaster (Sonner)
 
 app/today/page.tsx
   └─ TodayForm
@@ -1079,6 +1301,26 @@ app/day/[date]/page.tsx
       ├─ DayMVDIndicator
       ├─ DayReflection
       └─ DayTags
+
+app/insights/page.tsx
+  └─ InsightsPageClient
+      ├─ Sticky Filter Bar (7/30/90/all time)
+      ├─ Summary Cards (6 metrics)
+      ├─ InsightsNarrativeSummary
+      ├─ MoodEnergyChart
+      │   └─ ChartContainer + Recharts Line
+      ├─ CategoryBalanceChart
+      │   └─ ChartContainer + Recharts Radar
+      ├─ InsightsConsistencySection (collapsible)
+      │   └─ Streak and consistency metrics
+      ├─ InsightsMvdSection (collapsible)
+      │   └─ MVD frequency and patterns
+      ├─ InsightsTagsSection (collapsible)
+      │   └─ Tag usage and top tags
+      └─ InsightsCorrelationsSection (collapsible)
+          ├─ Category ↔ Mood patterns
+          ├─ Tag ↔ Mood & Energy patterns
+          └─ MVD vs Non-MVD comparisons
 ```
 
 ### Key Component Patterns
@@ -1119,6 +1361,39 @@ Complex forms are built from small, reusable components:
   <TagSelector />
   <MVDToggle />
 </TodayForm>
+```
+
+#### Context Pattern
+
+Global state managed through React Context:
+
+```tsx
+// AuthLoadingContext provides auth loading state
+const { isSigningOut, setIsSigningOut } = useAuthLoading();
+
+// Used in Header component for sign-out flow
+const handleSignOut = () => {
+  setIsSigningOut(true);
+  await signOut();
+  setIsSigningOut(false);
+};
+```
+
+#### Chart Components
+
+Insights uses Recharts wrapped in shadcn/ui chart primitives:
+
+```tsx
+<ChartContainer config={chartConfig}>
+  <LineChart data={data}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis dataKey="date" />
+    <YAxis />
+    <ChartTooltip content={<ChartTooltipContent />} />
+    <Line type="monotone" dataKey="mood" stroke="var(--color-mood)" />
+    <Line type="monotone" dataKey="energy" stroke="var(--color-energy)" />
+  </LineChart>
+</ChartContainer>
 ```
 
 #### Client/Server Boundary
@@ -1403,35 +1678,39 @@ revalidatePath("/path");
 
 ### Current Limitations
 
-1. **No Route Protection Middleware**: Pages don't automatically redirect unauthenticated users
-2. **No Insights Page**: Analytics dashboard not implemented
-3. **No Data Export**: Users can't export their data
-4. **No Mobile App**: Web-only (responsive, but not native)
-5. **No Offline Support**: Requires internet connection
-6. **Single-Tenant Only**: No team/organization features
+1. **Limited Route Protection**: Middleware only protects demo account, not general auth routing
+2. **No Data Export**: Users can't export their data (JSON, CSV, PDF)
+3. **No Mobile App**: Web-only (responsive, but not native)
+4. **No Offline Support**: Requires internet connection
+5. **Single-Tenant Only**: No team/organization features
+6. **No Custom Date Ranges**: Insights limited to preset ranges (7/30/90 days, all time)
+7. **No Comparison Views**: Can't compare two time periods side by side
 
 ### Planned Enhancements
 
 #### Short Term
-- [ ] Add middleware for automatic route protection
-- [ ] Implement insights dashboard with charts
-- [ ] Add data export (JSON, CSV)
+- [ ] Add middleware for automatic auth route protection (non-demo users)
+- [ ] Add data export (JSON, CSV, PDF)
 - [ ] Improve mobile UX (touch gestures for calendar)
 - [ ] Add keyboard shortcuts
+- [ ] Custom date range picker for insights
 
 #### Medium Term
-- [ ] Streak tracking ("Don't break the chain")
-- [ ] Weekly/monthly summaries
-- [ ] Goal setting and tracking
-- [ ] Reminder notifications
-- [ ] Dark mode toggle (auto from system)
+- [ ] Weekly/monthly email summaries
+- [ ] Goal setting and tracking (target scores per category)
+- [ ] Reminder notifications (push/email)
+- [ ] Dark mode toggle (currently auto from system)
+- [ ] Period comparison view (compare two date ranges)
+- [ ] Advanced statistical correlations (Pearson/Spearman coefficients)
 
 #### Long Term
-- [ ] AI-powered insights and suggestions
-- [ ] Multi-tenant (teams, families)
-- [ ] Public sharing (anonymous or with link)
-- [ ] Integration with calendar apps
-- [ ] Mobile apps (React Native)
+- [ ] AI-powered insights and predictions (optional)
+- [ ] Multi-tenant support (teams, families)
+- [ ] Public sharing (anonymous or with shareable link)
+- [ ] Integration with calendar apps (Google Calendar, Outlook)
+- [ ] Mobile apps (React Native or PWA)
+- [ ] Voice input for daily entries
+- [ ] Wearable integration (mood/energy from fitness trackers)
 
 ---
 
@@ -1455,6 +1734,20 @@ revalidatePath("/path");
 
 **Revalidation**: Next.js cache invalidation to show fresh data.
 
+**Insights**: Analytics dashboard showing trends, correlations, and patterns.
+
+**Narrative Summary**: Rule-based text generation providing contextual insights (3-5 sentences).
+
+**Correlations**: Statistical patterns showing relationships between categories, tags, mood, and energy.
+
+**Streak**: Consecutive days with logged entries.
+
+**Demo Account**: Protected test account (test@example.com) with restricted permissions.
+
+**Middleware**: Next.js server-side request interceptor for auth and route protection.
+
+**ChartContainer**: Recharts wrapper component from shadcn/ui for consistent chart styling.
+
 ---
 
 ## Additional Resources
@@ -1463,9 +1756,12 @@ revalidatePath("/path");
 
 - **README.md**: Quick start and overview
 - **AUTH_ARCHITECTURE.md**: Detailed auth system documentation
-- **IMPLEMENTATION_SUMMARY.md**: Implementation changelog
+- **IMPLEMENTATION_SUMMARY.md**: Core features implementation changelog
+- **INSIGHTS_V1_IMPLEMENTATION_SUMMARY.md**: Insights v1.0 implementation details
+- **INSIGHTS_V1.5_IMPLEMENTATION_SUMMARY.md**: Insights v1.5 upgrade (correlations, summaries)
 - **NEON_AUTH_SETUP.md**: Auth setup instructions
 - **QUICK_START.md**: Fast setup guide
+- **COMPREHENSIVE_DOCUMENTATION.md**: This file (complete technical reference)
 
 ### External Links
 
@@ -1474,6 +1770,9 @@ revalidatePath("/path");
 - [Stack Auth Documentation](https://docs.stack-auth.com)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Radix UI Documentation](https://www.radix-ui.com/docs)
+- [Recharts Documentation](https://recharts.org/en-US/)
+- [date-fns Documentation](https://date-fns.org/docs)
+- [shadcn/ui Documentation](https://ui.shadcn.com/)
 
 ---
 
@@ -1481,14 +1780,19 @@ revalidatePath("/path");
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2025-11-28 | Initial implementation | - |
+| 2025-11-28 | Initial implementation with core features | - |
 | 2025-11-28 | Added Neon Auth integration | - |
 | 2025-11-28 | Fixed investment category mapping | - |
 | 2025-11-28 | Created comprehensive documentation | - |
+| 2025-11-29 | Implemented Insights v1.0 (charts, metrics, streaks) | - |
+| 2025-11-29 | Implemented Insights v1.5 (correlations, narrative summaries) | - |
+| 2025-11-29 | Added middleware for demo account protection | - |
+| 2025-11-29 | Added AuthLoadingContext and loading overlays | - |
+| 2025-11-29 | Updated documentation to v1.5 | - |
 
 ---
 
-**Document Version:** 1.0.0  
-**Last Updated:** November 28, 2025  
-**Status:** ✅ Current Implementation Documented
+**Document Version:** 1.5.0  
+**Last Updated:** November 29, 2025  
+**Status:** ✅ Production Ready - Full Feature Set Documented
 
