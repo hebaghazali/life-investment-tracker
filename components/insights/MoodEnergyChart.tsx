@@ -50,23 +50,26 @@ export function MoodEnergyChart({ days, range }: MoodEnergyChartProps) {
   };
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+    <Card className="w-full max-w-full overflow-x-hidden p-4 md:p-6">
+      <h3 className="mb-3 text-base font-semibold text-foreground md:mb-4 md:text-lg">
         Mood & Energy Over Time
       </h3>
-      <ChartContainer config={chartConfig} className="h-[300px] w-full">
-        <LineChart data={chartData}>
+      <div className="w-full max-w-full">
+        <ChartContainer config={chartConfig} className="h-[220px] w-full md:h-[300px]">
+          <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 10 }}
             tickMargin={8}
+            className="md:text-xs"
           />
           <YAxis
             domain={[0, 5]}
             ticks={[1, 2, 3, 4, 5]}
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 10 }}
             tickMargin={8}
+            className="md:text-xs"
           />
           <ChartTooltip
             content={
@@ -109,6 +112,7 @@ export function MoodEnergyChart({ days, range }: MoodEnergyChartProps) {
           />
         </LineChart>
       </ChartContainer>
+      </div>
     </Card>
   );
 }

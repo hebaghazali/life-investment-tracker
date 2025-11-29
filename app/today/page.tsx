@@ -21,8 +21,8 @@ export default async function TodayPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="mx-auto w-full max-w-3xl">
+      <div className="mb-6">
         <h1 className="text-3xl font-semibold text-foreground">Today</h1>
         <p className="text-sm text-muted-foreground">{formattedDate}</p>
       </div>

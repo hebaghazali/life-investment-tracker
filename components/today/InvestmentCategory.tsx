@@ -19,10 +19,10 @@ export function InvestmentCategory({
   return (
     <div className="space-y-2">
       <div>
-        <h3 className="text-sm font-medium text-foreground">{info.label}</h3>
+        <h3 className="text-sm font-medium text-foreground md:text-base">{info.label}</h3>
         <p className="text-xs text-muted-foreground">{info.description}</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {scores.map((s) => (
           <button
             key={s}

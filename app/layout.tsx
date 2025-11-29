@@ -29,9 +29,9 @@ export default function RootLayout({
               <div className="min-h-screen bg-background">
                 <Suspense fallback={
                   <header className="border-b border-border bg-card">
-                    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+                    <div className="mx-auto max-w-6xl px-3 md:px-6 lg:px-8">
                       <div className="flex h-16 items-center justify-between">
-                        <h1 className="text-xl font-semibold text-foreground">
+                        <h1 className="text-lg md:text-xl font-semibold text-foreground">
                           Life Investment Journal
                         </h1>
                         <nav className="flex items-center gap-6">
@@ -43,7 +43,7 @@ export default function RootLayout({
                 }>
                   <Header />
                 </Suspense>
-                <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+                <main className="mx-auto max-w-4xl px-3 py-4 md:px-6 md:py-8 lg:px-8">
                   {children}
                 </main>
               </div>

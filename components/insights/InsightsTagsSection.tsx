@@ -21,14 +21,14 @@ export function InsightsTagsSection({ days }: InsightsTagsSectionProps) {
   const hasData = tagAnalytics.length > 0;
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Tags</h3>
+    <Card className="w-full max-w-full overflow-x-hidden p-4 md:p-6">
+      <div className="mb-3 flex items-center justify-between md:mb-4">
+        <h3 className="text-base font-semibold text-foreground md:text-lg">Tags</h3>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="h-8 w-8 p-0"
+          className="h-9 w-9 p-0 md:h-8 md:w-8"
         >
           <ChevronDown
             className={`h-4 w-4 transition-transform ${
@@ -39,18 +39,18 @@ export function InsightsTagsSection({ days }: InsightsTagsSectionProps) {
       </div>
 
       {!hasData ? (
-        <div className="text-center py-8">
-          <p className="text-sm text-muted-foreground">
+        <div className="py-6 text-center md:py-8">
+          <p className="text-xs text-muted-foreground md:text-sm">
             No tags used in this period yet.
           </p>
         </div>
       ) : (
         isExpanded && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-4 animate-in fade-in duration-200 md:space-y-6">
             {/* Top 3 Tags */}
             {topThreeTags.length > 0 && (
               <div>
-                <div className="text-sm text-muted-foreground mb-3">
+                <div className="mb-2 text-xs text-muted-foreground md:mb-3 md:text-sm">
                   Top 3 tags this period
                 </div>
                 <div className="flex flex-wrap gap-2">

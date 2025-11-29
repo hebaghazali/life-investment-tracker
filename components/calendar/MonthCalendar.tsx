@@ -140,10 +140,10 @@ export function MonthCalendar({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       {/* Month navigation */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold text-foreground">
+        <h2 className="text-lg font-semibold text-foreground md:text-2xl">
           {monthName} {currentYear}
         </h2>
         <div className="flex gap-2">
@@ -157,16 +157,16 @@ export function MonthCalendar({
       </div>
 
       {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-2 text-center">
+      <div className="grid grid-cols-7 gap-1 text-center md:gap-2">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="text-sm font-medium text-muted-foreground">
+          <div key={day} className="text-xs font-medium text-muted-foreground md:text-sm">
             {day}
           </div>
         ))}
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2">{calendarDays}</div>
+      <div className="grid grid-cols-7 gap-1 md:gap-2">{calendarDays}</div>
 
       {/* Day preview drawer */}
       {selectedDate && (

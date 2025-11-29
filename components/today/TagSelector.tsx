@@ -19,7 +19,7 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium text-foreground">Tags</h3>
+      <h3 className="text-sm font-medium text-foreground md:text-base">Tags</h3>
       <div className="flex flex-wrap gap-2">
         {AVAILABLE_TAGS.map((tag) => {
           const isSelected = selectedTags.includes(tag);

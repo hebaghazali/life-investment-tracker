@@ -161,11 +161,11 @@ export function InsightsPageClient({
           </p>
         </div>
 
-        <Card className="p-12 text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+        <Card className="w-full max-w-full overflow-x-hidden p-8 text-center md:p-12">
+          <h3 className="mb-2 text-base font-semibold text-foreground md:text-lg">
             No insights yet
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="mb-4 text-xs text-muted-foreground md:text-sm">
             Once you log a few days in Today or Calendar, you'll start seeing
             patterns here.
           </p>
@@ -185,21 +185,21 @@ export function InsightsPageClient({
   const { aggregates } = filteredData;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-full space-y-4 overflow-x-hidden md:space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-semibold text-foreground">Insights</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-semibold text-foreground md:text-3xl">Insights</h1>
+        <p className="text-xs text-muted-foreground md:text-sm">
           See patterns in your life investments over time
         </p>
       </div>
 
       {/* Sticky Filters Section */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 py-4 -mx-6 px-6 border-b border-transparent data-[scrolled=true]:border-border">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <div className="sticky top-0 z-10 -mx-3 border-b border-transparent bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 data-[scrolled=true]:border-border md:-mx-6 md:px-6 md:py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
           {/* Time Range Selector */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground self-center mr-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-xs text-muted-foreground md:mr-2 md:text-sm">
               Time range:
             </span>
             {(["last-7-days", "last-30-days", "last-90-days", "all-time"] as TimeRange[]).map(
@@ -220,8 +220,8 @@ export function InsightsPageClient({
           </div>
 
           {/* Category Focus Selector */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground self-center mr-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 text-xs text-muted-foreground md:mr-2 md:text-sm">
               Focus:
             </span>
             <Button
@@ -246,43 +246,43 @@ export function InsightsPageClient({
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
         {/* Average Mood */}
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground">Average Mood</div>
-          <div className="text-3xl font-semibold text-foreground mt-1">
+        <Card className="p-4 md:p-6">
+          <div className="text-xs text-muted-foreground md:text-sm">Average Mood</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
             {aggregates.averageMood !== null
               ? aggregates.averageMood.toFixed(1)
               : "—"}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             in {getRangeLabel(selectedRange)}
           </div>
         </Card>
 
         {/* Average Energy */}
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground">Average Energy</div>
-          <div className="text-3xl font-semibold text-foreground mt-1">
+        <Card className="p-4 md:p-6">
+          <div className="text-xs text-muted-foreground md:text-sm">Average Energy</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
             {aggregates.averageEnergy !== null
               ? aggregates.averageEnergy.toFixed(1)
               : "—"}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             in {getRangeLabel(selectedRange)}
           </div>
         </Card>
 
         {/* Days Logged */}
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground">Days Logged</div>
-          <div className="text-3xl font-semibold text-foreground mt-1">
+        <Card className="p-4 md:p-6">
+          <div className="text-xs text-muted-foreground md:text-sm">Days Logged</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
             {aggregates.totalDaysLogged}
-            <span className="text-base text-muted-foreground ml-1">
+            <span className="ml-1 text-sm text-muted-foreground md:text-base">
               / {totalDaysInRange}
             </span>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             {totalDaysInRange > 0
               ? `${Math.round((aggregates.totalDaysLogged / totalDaysInRange) * 100)}% coverage`
               : ""}
@@ -290,12 +290,12 @@ export function InsightsPageClient({
         </Card>
 
         {/* MVD Days */}
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground">Minimum Viable Days</div>
-          <div className="text-3xl font-semibold text-foreground mt-1">
+        <Card className="p-4 md:p-6">
+          <div className="text-xs text-muted-foreground md:text-sm">Minimum Viable Days</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
             {aggregates.mvdCount}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             {aggregates.totalDaysLogged > 0
               ? `${Math.round((aggregates.mvdCount / aggregates.totalDaysLogged) * 100)}% of logged days`
               : ""}
@@ -303,14 +303,14 @@ export function InsightsPageClient({
         </Card>
 
         {/* Most Invested Category */}
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground">Most Invested</div>
-          <div className="text-3xl font-semibold text-foreground mt-1">
+        <Card className="p-4 md:p-6">
+          <div className="text-xs text-muted-foreground md:text-sm">Most Invested</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
             {aggregates.mostInvestedCategory
               ? CATEGORY_INFO[aggregates.mostInvestedCategory].label
               : "—"}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             {aggregates.mostInvestedCategory
               ? `${aggregates.categoryAggregates[aggregates.mostInvestedCategory].total} total points`
               : ""}
@@ -318,14 +318,14 @@ export function InsightsPageClient({
         </Card>
 
         {/* Least Invested Category */}
-        <Card className="p-6">
-          <div className="text-sm text-muted-foreground">Least Invested</div>
-          <div className="text-3xl font-semibold text-foreground mt-1">
+        <Card className="p-4 md:p-6">
+          <div className="text-xs text-muted-foreground md:text-sm">Least Invested</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground md:text-3xl">
             {aggregates.leastInvestedCategory
               ? CATEGORY_INFO[aggregates.leastInvestedCategory].label
               : "—"}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             {aggregates.leastInvestedCategory
               ? `${aggregates.categoryAggregates[aggregates.leastInvestedCategory].total} total points`
               : ""}
@@ -335,8 +335,8 @@ export function InsightsPageClient({
 
       {/* Limited data warning */}
       {isLimitedData && (
-        <Card className="p-4 bg-muted/50">
-          <p className="text-sm text-muted-foreground">
+        <Card className="w-full max-w-full overflow-x-hidden bg-muted/50 p-3 md:p-4">
+          <p className="text-xs text-muted-foreground md:text-sm">
             Insights may be limited with only {filteredData.aggregates.totalDaysLogged}{" "}
             {filteredData.aggregates.totalDaysLogged === 1 ? "day" : "days"} logged
             in this range.
@@ -346,11 +346,11 @@ export function InsightsPageClient({
 
       {/* Data exists but none in current range - show inline empty state */}
       {!hasDataInRange ? (
-        <Card className="p-12 text-center">
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+        <Card className="w-full max-w-full overflow-x-hidden p-8 text-center md:p-12">
+          <h3 className="mb-2 text-base font-semibold text-foreground md:text-lg">
             No entries found in this period
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="mb-4 text-xs text-muted-foreground md:text-sm">
             Try adjusting your time range to see insights.
           </p>
           <div className="flex gap-3 justify-center">
@@ -369,7 +369,7 @@ export function InsightsPageClient({
           </div>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="w-full max-w-full space-y-8 overflow-x-hidden">
           {/* Narrative Summary */}
           <InsightsNarrativeSummary data={filteredData} />
 
@@ -377,7 +377,7 @@ export function InsightsPageClient({
           <div className="h-px bg-border" />
 
           {/* Charts Section */}
-          <div className="grid gap-6 lg:grid-cols-2 animate-in fade-in duration-300">
+          <div className="grid w-full max-w-full animate-in gap-4 fade-in duration-300 md:gap-6 lg:grid-cols-2">
             <MoodEnergyChart 
               days={filteredData.days} 
               range={selectedRange} 

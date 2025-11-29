@@ -64,7 +64,8 @@ function DemoAccountDialog() {
       <DialogTrigger asChild>
         <button 
           className={`
-            inline-flex items-center gap-1.5 px-3 py-1 text-sm 
+            inline-flex items-center gap-1 px-2 py-1 text-xs
+            md:gap-1.5 md:px-3 md:text-sm
             rounded-full cursor-pointer
             bg-blue-50 text-blue-700 border border-blue-200
             hover:bg-blue-100 hover:text-blue-800 hover:border-blue-300
@@ -75,8 +76,8 @@ function DemoAccountDialog() {
             ${shouldAnimate ? 'animate-gentle-pulse-once' : ''}
           `.trim().replace(/\s+/g, ' ')}
         >
-          <Info className="h-4 w-4" />
-          <span>Use demo account</span>
+          <Info className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <span className="whitespace-nowrap">Use demo account</span>
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -192,13 +193,13 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
   // Don't render account settings for demo user (prevents flash before redirect)
   if (isDemo && isAccountSettingsPage) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-center justify-center p-3 md:p-4">
         <Card className="max-w-md border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
-          <div className="p-6 text-center">
-            <h2 className="mb-2 text-lg font-semibold text-amber-900 dark:text-amber-100">
+          <div className="p-4 text-center md:p-6">
+            <h2 className="mb-2 text-base font-semibold text-amber-900 dark:text-amber-100 md:text-lg">
               Demo Account Restriction
             </h2>
-            <p className="text-sm text-amber-800 dark:text-amber-200">
+            <p className="text-xs text-amber-800 dark:text-amber-200 md:text-sm">
               Account settings are disabled for the demo account to keep it accessible for everyone. 
               Redirecting you back...
             </p>
@@ -212,7 +213,7 @@ export function AuthPageWrapper({ children }: AuthPageWrapperProps) {
     <div className="relative">
       {/* Compact demo account link positioned at top - only on sign-in page */}
       {isSignInPage && (
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute right-3 top-3 z-10 md:right-4 md:top-4">
           <DemoAccountDialog />
         </div>
       )}

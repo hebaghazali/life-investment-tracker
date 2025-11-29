@@ -82,10 +82,10 @@ export function TodayForm({ date, initialEntry }: TodayFormProps) {
   };
 
   return (
-    <Card className="p-6 space-y-6">
+    <Card className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-6">
       {/* Investment Categories */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">
+      <div className="space-y-6">
+        <h2 className="text-xl font-semibold text-foreground md:text-2xl">
           How did you invest today?
         </h2>
         {INVESTMENT_CATEGORIES.map((category) => {

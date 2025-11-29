@@ -23,9 +23,9 @@ export function InsightsNarrativeSummary({
 
   if (!summaries || summaries.length === 0) {
     return (
-      <Card className="p-6 bg-muted/30">
-        <h3 className="text-lg font-semibold text-foreground mb-3">Summary</h3>
-        <p className="text-sm text-muted-foreground">
+      <Card className="w-full max-w-full overflow-x-hidden bg-muted/30 p-4 md:p-6">
+        <h3 className="mb-3 text-base font-semibold text-foreground md:text-lg">Summary</h3>
+        <p className="text-xs text-muted-foreground md:text-sm">
           Log a few more days to unlock personalized summaries.
         </p>
       </Card>
@@ -33,13 +33,13 @@ export function InsightsNarrativeSummary({
   }
 
   return (
-    <Card className="p-6 bg-muted/30 animate-in fade-in duration-300">
-      <h3 className="text-lg font-semibold text-foreground mb-4">Summary</h3>
+    <Card className="w-full max-w-full animate-in overflow-x-hidden bg-muted/30 p-4 fade-in duration-300 md:p-6">
+      <h3 className="mb-3 text-base font-semibold text-foreground md:mb-4 md:text-lg">Summary</h3>
       <div className="space-y-3">
         {summaries.map((summary, index) => (
           <p
             key={index}
-            className="text-sm text-muted-foreground leading-relaxed"
+            className="text-xs leading-relaxed text-muted-foreground md:text-sm"
           >
             {summary}
           </p>

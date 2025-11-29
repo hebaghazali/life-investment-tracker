@@ -15,8 +15,8 @@ export function MoodEnergySelector({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-medium text-foreground">{label}</h3>
-      <div className="flex gap-2">
+      <h3 className="text-sm font-medium text-foreground md:text-base">{label}</h3>
+      <div className="flex flex-wrap gap-2">
         {levels.map((level) => (
           <button
             key={level}

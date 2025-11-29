@@ -78,24 +78,23 @@ export function DayPageClient({ date, entry }: DayPageClientProps) {
   // Empty state - no entry exists
   if (!entry) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <Link
-              href="/calendar"
-              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to Calendar
-            </Link>
-            <h1 className="text-3xl font-bold text-foreground">
-              {formattedDate}
-            </h1>
-          </div>
+      <div className="mx-auto w-full max-w-3xl">
+        {/* Header */}
+        <div className="mb-6">
+          <Link
+            href="/calendar"
+            className="mb-4 inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Back to Calendar
+          </Link>
+          <h1 className="text-3xl font-bold text-foreground">
+            {formattedDate}
+          </h1>
+        </div>
 
-          {/* Empty State */}
-          <Card className="p-12 text-center">
+        {/* Empty State */}
+        <Card className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-12 text-center">
             <div className="space-y-4">
               <div className="text-muted-foreground">
                 <svg
@@ -126,8 +125,7 @@ export function DayPageClient({ date, entry }: DayPageClientProps) {
                 </Button>
               </div>
             </div>
-          </Card>
-        </div>
+        </Card>
 
         {/* Edit Modal */}
         {isEditModalOpen && (
@@ -143,82 +141,80 @@ export function DayPageClient({ date, entry }: DayPageClientProps) {
 
   // Entry exists - show full day view
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/calendar"
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back to Calendar
-          </Link>
-          <h1 className="text-3xl font-bold text-foreground">
-            {formattedDate}
-          </h1>
-        </div>
+    <div className="mx-auto w-full max-w-3xl">
+      {/* Header */}
+      <div className="mb-6">
+        <Link
+          href="/calendar"
+          className="mb-4 inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ChevronLeft className="mr-1 h-4 w-4" />
+          Back to Calendar
+        </Link>
+        <h1 className="text-3xl font-bold text-foreground">
+          {formattedDate}
+        </h1>
+      </div>
 
-        {/* Content */}
-        <div className="space-y-6">
-          {/* Key Metrics Section */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">
-              Key Metrics
-            </h2>
-            <DayKeyMetrics entry={entry} totalScore={totalScore} />
-          </Card>
+      {/* Content */}
+      <div className="space-y-6">
+        {/* Key Metrics Section */}
+        <Card className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
+            Key Metrics
+          </h2>
+          <DayKeyMetrics entry={entry} totalScore={totalScore} />
+        </Card>
 
-          {/* MVD Badge */}
-          {entry.isMinimumViableDay && (
-            <div>
-              <DayMVDIndicator isMinimumViableDay={entry.isMinimumViableDay} />
-            </div>
-          )}
-
-          {/* Investments Section */}
-          <Card className="p-6">
-            <DayInvestments entry={entry} />
-          </Card>
-
-          {/* Tags Section */}
-          {entry.tags && entry.tags.length > 0 && (
-            <Card className="p-6">
-              <DayTags tags={entry.tags} />
-            </Card>
-          )}
-
-          {/* Reflection Section */}
-          <Card className="p-6">
-            <DayReflection note={entry.note} />
-          </Card>
-
-          {/* Actions Section */}
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={handleDeleteClick}
-              disabled={isDeletePending}
-              className={
-                showDeleteConfirm
-                  ? "flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  : "flex-1"
-              }
-            >
-              {showDeleteConfirm
-                ? "Confirm deletion?"
-                : isDeletePending
-                ? "Deleting..."
-                : "Delete day"}
-            </Button>
-            <Button
-              onClick={handleEditClick}
-              disabled={isDeletePending}
-              className="flex-1"
-            >
-              Edit day
-            </Button>
+        {/* MVD Badge */}
+        {entry.isMinimumViableDay && (
+          <div>
+            <DayMVDIndicator isMinimumViableDay={entry.isMinimumViableDay} />
           </div>
+        )}
+
+        {/* Investments Section */}
+        <Card className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <DayInvestments entry={entry} />
+        </Card>
+
+        {/* Tags Section */}
+        {entry.tags && entry.tags.length > 0 && (
+          <Card className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+            <DayTags tags={entry.tags} />
+          </Card>
+        )}
+
+        {/* Reflection Section */}
+        <Card className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+          <DayReflection note={entry.note} />
+        </Card>
+
+        {/* Actions Section */}
+        <div className="flex gap-3 pt-4">
+          <Button
+            variant="outline"
+            onClick={handleDeleteClick}
+            disabled={isDeletePending}
+            className={
+              showDeleteConfirm
+                ? "flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                : "flex-1"
+            }
+          >
+            {showDeleteConfirm
+              ? "Confirm deletion?"
+              : isDeletePending
+              ? "Deleting..."
+              : "Delete day"}
+          </Button>
+          <Button
+            onClick={handleEditClick}
+            disabled={isDeletePending}
+            className="flex-1"
+          >
+            Edit day
+          </Button>
         </div>
       </div>
 

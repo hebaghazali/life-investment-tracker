@@ -27,20 +27,20 @@ export function DayCell({ day, entry, isToday, onClick }: DayCellProps) {
   return (
     <button
       onClick={onClick}
-      className={`aspect-square rounded-lg border-2 p-2 transition-all hover:scale-105 hover:shadow-md ${
+      className={`flex min-h-[44px] aspect-square items-center justify-center rounded-lg border-2 p-2 transition-all hover:scale-105 hover:shadow-md ${
         isToday ? "border-primary" : "border-border"
       } ${intensity}`}
     >
-      <div className="flex h-full flex-col items-start justify-between">
+      <div className="flex h-full w-full flex-col items-start justify-between">
         <span
-          className={`text-sm font-medium ${
+          className={`text-xs font-medium md:text-sm ${
             isToday ? "text-primary" : "text-foreground"
           }`}
         >
           {day}
         </span>
         {entry?.isMinimumViableDay && (
-          <Badge variant="secondary" className="text-xs px-1 py-0">
+          <Badge variant="secondary" className="px-1 py-0 text-[10px] md:text-xs">
             MVD
           </Badge>
         )}

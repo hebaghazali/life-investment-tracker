@@ -47,25 +47,28 @@ export function CategoryBalanceChart({
   );
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-4">
+    <Card className="w-full max-w-full overflow-x-hidden p-4 md:p-6">
+      <h3 className="mb-3 text-base font-semibold text-foreground md:mb-4 md:text-lg">
         Investment by Category
       </h3>
-      <ChartContainer config={chartConfig} className="h-[300px] w-full">
-        <BarChart data={chartData}>
+      <div className="w-full max-w-full">
+        <ChartContainer config={chartConfig} className="h-[220px] w-full md:h-[300px]">
+          <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis
             dataKey="category"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 9 }}
             tickMargin={8}
             angle={-45}
             textAnchor="end"
-            height={80}
+            height={70}
+            className="md:text-xs"
           />
           <YAxis
-            tick={{ fontSize: 12 }}
+            tick={{ fontSize: 10 }}
             tickMargin={8}
-            label={{ value: 'Total Score', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
+            label={{ value: 'Total Score', angle: -90, position: 'insideLeft', style: { fontSize: 10 } }}
+            className="md:text-xs"
           />
           <ChartTooltip
             content={
@@ -116,6 +119,7 @@ export function CategoryBalanceChart({
           </Bar>
         </BarChart>
       </ChartContainer>
+      </div>
     </Card>
   );
 }

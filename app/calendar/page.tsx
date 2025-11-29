@@ -17,8 +17,8 @@ export default async function CalendarPage() {
   const entries = await getEntriesForMonth(year, month);
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="mx-auto w-full max-w-3xl">
+      <div className="mb-6">
         <h1 className="text-3xl font-semibold text-foreground">Calendar</h1>
         <p className="text-sm text-muted-foreground">
           Your investment journey over time
