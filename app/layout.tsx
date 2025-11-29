@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
 import { Toaster } from "sonner";
 import { Header } from "@/components/layout/Header";
 import { StackProvider, StackTheme } from "@stackframe/stack";
@@ -8,14 +7,8 @@ import { stackServerApp } from "@/lib/stack";
 import { AuthLoadingProvider } from "@/contexts/AuthLoadingContext";
 import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { OfflineSyncProviderWrapper } from "@/components/OfflineSyncProviderWrapper";
 import "./globals.css";
-
-// Dynamically import OfflineSyncProvider to prevent SSR issues
-// It only needs to run on the client side
-const OfflineSyncProvider = dynamic(
-  () => import("@/components/OfflineSyncProvider").then((mod) => ({ default: mod.OfflineSyncProvider })),
-  { ssr: false }
-);
 
 export const metadata: Metadata = {
   title: "Life Investment Tracker",
@@ -54,7 +47,7 @@ export default function RootLayout({
           <StackTheme>
             <AuthLoadingProvider>
               <ServiceWorkerRegister />
-              <OfflineSyncProvider />
+              <OfflineSyncProviderWrapper />
               <AuthLoadingOverlay />
               <div className="min-h-screen bg-background">
                 <Suspense fallback={
