@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@stackframe/stack";
 import { toast } from "sonner";
 import type { DayEntry, Investment, InvestmentCategory } from "@/lib/types";
 import { INVESTMENT_CATEGORIES } from "@/lib/types";
@@ -20,6 +21,13 @@ import { MoodEnergySelector } from "@/components/today/MoodEnergySelector";
 import { ReflectionNote } from "@/components/today/ReflectionNote";
 import { TagSelector } from "@/components/today/TagSelector";
 import { MVDToggle } from "@/components/today/MVDToggle";
+import {
+  saveOfflineEntry,
+  removeOfflineEntry,
+  getOfflineEntryForDate,
+  hasPendingEntryForDate,
+} from "@/lib/offlineQueue";
+import { WifiOff } from "lucide-react";
 
 interface DayDetailModalProps {
   date: string;
@@ -29,7 +37,9 @@ interface DayDetailModalProps {
 
 export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
   const router = useRouter();
+  const user = useUser({ or: "return-null" });
   const [isPending, startTransition] = useTransition();
+  const [hasPendingSync, setHasPendingSync] = useState(false);
   const { deleteDay: deleteDayAction, isPending: isDeletePending } = useDeleteDay({
     onSuccess: () => {
       // Reset local form state to defaults
@@ -56,15 +66,40 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
   const [isMinimumViableDay, setIsMinimumViableDay] = useState(false);
 
   useEffect(() => {
-    if (entry) {
+    if (!user?.id) return;
+
+    // First check for pending offline entry - it takes priority
+    const offlineEntry = getOfflineEntryForDate(user.id, date);
+    
+    if (offlineEntry) {
+      // Pre-fill form with offline data (latest source of truth)
+      setMood(offlineEntry.mood ?? undefined);
+      setEnergy(offlineEntry.energy ?? undefined);
+      setNote(offlineEntry.note || "");
+      setTags(offlineEntry.tags);
+      setIsMinimumViableDay(offlineEntry.isMinimumViableDay ?? false);
+      
+      const offlineInvestments = offlineEntry.investments.map((inv) => ({
+        id: `${date}-${inv.category}`,
+        category: inv.category,
+        score: inv.score,
+        comment: inv.comment,
+      }));
+      setInvestments(offlineInvestments);
+      
+      setHasPendingSync(true);
+      console.log("[DayDetailModal] Loaded offline entry for", date);
+    } else if (entry) {
+      // Use server entry if no offline version exists
       setInvestments(entry.investments);
       setMood(entry.mood ?? undefined);
       setEnergy(entry.energy ?? undefined);
       setNote(entry.note || "");
       setTags(entry.tags || []);
       setIsMinimumViableDay(entry.isMinimumViableDay || false);
+      setHasPendingSync(false);
     } else {
-      // Initialize with default investments
+      // Initialize with defaults for new entry
       setInvestments(
         INVESTMENT_CATEGORIES.map((cat) => ({
           id: `${date}-${cat}`,
@@ -77,8 +112,16 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
       setNote("");
       setTags([]);
       setIsMinimumViableDay(false);
+      setHasPendingSync(false);
     }
-  }, [entry, date]);
+  }, [entry, date, user?.id]);
+
+  // Re-check pending status
+  useEffect(() => {
+    if (!user?.id) return;
+    const isPending = hasPendingEntryForDate(user.id, date);
+    setHasPendingSync(isPending);
+  }, [user?.id, date]);
 
   const handleScoreChange = (category: InvestmentCategory, score: number) => {
     setInvestments((prev) => {
@@ -94,21 +137,29 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
   };
 
   const handleSave = () => {
+    if (!user?.id) return;
+
     startTransition(async () => {
+      const payload = {
+        date,
+        mood: mood ?? null,
+        energy: energy ?? null,
+        note: note || null,
+        isMinimumViableDay,
+        investments: investments.map((inv) => ({
+          category: inv.category,
+          score: inv.score,
+          comment: inv.comment ?? null,
+        })),
+        tags,
+      };
+
       try {
-        await saveDayEntry({
-          date,
-          mood: mood ?? null,
-          energy: energy ?? null,
-          note: note || null,
-          isMinimumViableDay,
-          investments: investments.map((inv) => ({
-            category: inv.category,
-            score: inv.score,
-            comment: inv.comment ?? null,
-          })),
-          tags,
-        });
+        await saveDayEntry(payload);
+        
+        // Remove from offline queue on successful save
+        removeOfflineEntry(user.id, date);
+        setHasPendingSync(false);
         
         // Refresh router to fetch updated data from server
         router.refresh();
@@ -116,8 +167,14 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
         toast.success("Entry saved successfully.");
         onClose();
       } catch (error) {
-        toast.error("Failed to save entry. Please try again.");
-        console.error(error);
+        console.error("[DayDetailModal] Failed to save online, storing offline:", error);
+        
+        // Save to offline queue
+        saveOfflineEntry(user.id, payload);
+        setHasPendingSync(true);
+        
+        toast.warning("Saved locally. Will sync when you are back online.");
+        // Don't close modal - user can see the pending sync indicator
       }
     });
   };
@@ -146,7 +203,15 @@ export function DayDetailModal({ date, entry, onClose }: DayDetailModalProps) {
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{formattedDate}</DialogTitle>
+          <div className="flex items-center gap-3">
+            <DialogTitle>{formattedDate}</DialogTitle>
+            {hasPendingSync && (
+              <div className="flex items-center gap-1.5 rounded-md bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+                <WifiOff className="h-3.5 w-3.5" />
+                Pending sync
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">

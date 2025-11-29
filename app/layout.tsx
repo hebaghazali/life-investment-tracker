@@ -7,6 +7,7 @@ import { stackServerApp } from "@/lib/stack";
 import { AuthLoadingProvider } from "@/contexts/AuthLoadingContext";
 import { AuthLoadingOverlay } from "@/components/AuthLoadingOverlay";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { OfflineSyncProvider } from "@/components/OfflineSyncProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -46,6 +47,7 @@ export default function RootLayout({
           <StackTheme>
             <AuthLoadingProvider>
               <ServiceWorkerRegister />
+              <OfflineSyncProvider />
               <AuthLoadingOverlay />
               <div className="min-h-screen bg-background">
                 <Suspense fallback={
